@@ -932,7 +932,7 @@ void printUsageAndExit( const std::string& argv0 )
 
 int main( int argc, char** argv )
 {
-    bool use_pbo = true;
+    bool use_pbo = false;
     unsigned int photon_launch_dim = PHOTON_LAUNCH_DIM;
     std::string out_file;
     for( int i=1; i<argc; ++i )
