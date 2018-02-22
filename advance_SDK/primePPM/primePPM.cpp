@@ -58,6 +58,7 @@
 #include <imgui/imgui_impl_glfw.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -984,15 +985,17 @@ int main( int argc, char** argv )
 
     try
     {
-        GLFWwindow* window = glfwInitialize();
+        //GLFWwindow* window = glfwInitialize();
 
 #ifndef __APPLE__
+      /*
         GLenum err = glewInit();
         if (err != GLEW_OK)
         {
             std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
             exit(EXIT_FAILURE);
         }
+        */
 #endif
 
         Buffer photons_buffer;
@@ -1015,19 +1018,22 @@ int main( int argc, char** argv )
         
         if ( out_file.empty() )
         {
-            glfwRun( window, camera, light, photon_launch_dim, photons_buffer, photon_map_buffer );
+            //glfwRun( window, camera, light, photon_launch_dim, photons_buffer, photon_map_buffer );
         }
         else
         {
-            const unsigned int numframes = 16;
+            const unsigned int numframes = 1000;
             std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
             for ( unsigned int frame = 0; frame < numframes; ++frame ) {
-                context["frame_number"]->setFloat( static_cast<float>( frame++ ) );
+                context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
+                char char_frame[20];
+                sprintf(char_frame, "%08d.png", frame);
+                if (frame <= 100 || frame % 50 == 0)
+                    sutil::writeBufferToFile( (out_file + char_frame).c_str(), getOutputBuffer() );
             }
             // Note: the float4 output buffer is written in linear space without gamma correction, 
             // so it won't match the interactive display.  Apply gamma in an image viewer.
-            sutil::writeBufferToFile( out_file.c_str(), getOutputBuffer() );
             std::cerr << "Wrote " << out_file << std::endl;
             destroyContext();
         }
