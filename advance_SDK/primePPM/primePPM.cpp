@@ -91,6 +91,7 @@ Context      context = 0;
 
 bool s_display_debug_buffer = false;
 bool s_print_timings = false;
+bool s_collect_photon_data = false;
 
 
 //------------------------------------------------------------------------------
@@ -209,9 +210,15 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
     context["total_emitted"]->setFloat( 0.0f );
     context["frame_number"]->setFloat( 0.0f );
     context["use_debug_buffer"]->setUint( s_display_debug_buffer );
+    context["collect_photon_data"]->setUint( s_collect_photon_data );
 
     Buffer buffer = sutil::createOutputBuffer( context, RT_FORMAT_FLOAT4, WIDTH, HEIGHT, use_pbo );
     context["output_buffer"]->set( buffer );
+
+    // Photon output buffer
+    Buffer photon_data = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_USER, WIDTH, HEIGHT );
+    photon_data->setElementSize( sizeof( PhotonData ) );
+    context["photon_data"]->set( photon_data );
 
     // Debug output buffer
     Buffer debug_buffer = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_FLOAT4, WIDTH, HEIGHT );
@@ -920,6 +927,7 @@ void printUsageAndExit( const std::string& argv0 )
         "         --photon-dim <n>        Width and height of photon launch grid. Default = " << PHOTON_LAUNCH_DIM << ".\n"
         "  -ddb | --display-debug-buffer  Display debug buffer information to the shell.\n"
         "  -pt  | --print-timings         Print timing information.\n"
+        "  -cpd | --collect-photon-data   Collect photon data.\n"
         "App Keystrokes:\n"
         "  q  Quit\n"
         "  s  Save image to '" << SAMPLE_NAME << ".png'\n"
@@ -965,6 +973,10 @@ int main( int argc, char** argv )
         {
             s_print_timings = true;
         }
+        else if( arg == "-cpd" || arg == "--collect-photon-data" )
+        {
+            s_collect_photon_data = true;
+        }
         else if( arg == "--photon-dim" )
         {
             if( i == argc-1 )
@@ -985,19 +997,6 @@ int main( int argc, char** argv )
 
     try
     {
-        //GLFWwindow* window = glfwInitialize();
-
-#ifndef __APPLE__
-      /*
-        GLenum err = glewInit();
-        if (err != GLEW_OK)
-        {
-            std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        */
-#endif
-
         Buffer photons_buffer;
         Buffer photon_map_buffer;
         createContext( use_pbo, photon_launch_dim, photons_buffer, photon_map_buffer );
@@ -1018,19 +1017,31 @@ int main( int argc, char** argv )
         
         if ( out_file.empty() )
         {
-            //glfwRun( window, camera, light, photon_launch_dim, photons_buffer, photon_map_buffer );
+            GLFWwindow* window = glfwInitialize();
+
+#ifndef __APPLE__
+            GLenum err = glewInit();
+            if (err != GLEW_OK)
+            {
+                std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
+                exit(EXIT_FAILURE);
+            }
+#endif
+            glfwRun( window, camera, light, photon_launch_dim, photons_buffer, photon_map_buffer );
         }
         else
         {
-            const unsigned int numframes = 1000;
+            const unsigned int numframes = 100000;
             std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
                 context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
                 char char_frame[20];
                 sprintf(char_frame, "%08d.png", frame);
-                if (frame <= 100 || frame % 50 == 0)
+                if (frame <= 20 || frame % 1000 == 0)
                     sutil::writeBufferToFile( (out_file + char_frame).c_str(), getOutputBuffer() );
+                if (s_collect_photon_data) {
+                }
             }
             // Note: the float4 output buffer is written in linear space without gamma correction, 
             // so it won't match the interactive display.  Apply gamma in an image viewer.

@@ -38,11 +38,13 @@ using namespace optix;
 // Ray generation program
 //
 
+rtDeclareVariable(uint,          collect_photon_data, , );
 rtDeclareVariable(rtObject,      top_object, , );
 rtBuffer<float4, 2>              output_buffer;
 rtBuffer<float4, 2>              debug_buffer;
 rtBuffer<PackedPhotonRecord, 1>  photon_map;
 rtBuffer<PackedHitRecord, 2>     rtpass_output_buffer;
+rtBuffer<PhotonIndex, 2>         photon_index_buffer;
 rtBuffer<uint2, 2>               image_rnd_seeds;
 rtDeclareVariable(float,         scene_epsilon, , );
 rtDeclareVariable(float,         alpha, , );
@@ -101,6 +103,15 @@ RT_PROGRAM void gather()
   float3 rec_flux     = make_float3( rec.d.x, rec.d.y, rec.d.z );
   float  rec_accum_atten = rec.d.w;
 
+  uint* photon_index;
+  float dis[photon_count_per_pixel];
+  int collected_photon_count = 0;
+  if (collect_photon_data) {
+    photon_index = photon_index_buffer[launch_index];
+    for (int i = 0; i < photon_count_per_pixel; ++i)
+      photon_index[i] = -1;
+  }
+
   // Check if this is hit point lies on an emitter or hit background 
   if( !(rec_flags & PPM_HIT) || rec_flags & PPM_OVERFLOW ) {
     //output_buffer[launch_index] = make_float4(rec_atten_Kd);
@@ -136,6 +147,19 @@ RT_PROGRAM void gather()
 
       if (distance2 <= rec_radius2) {
         accumulatePhoton(photon, rec_normal, rec_atten_Kd, num_new_photons, flux_M);
+        if (collect_photon_data) {
+          for (int i = 0; i < photon_count_per_pixel; ++i)
+            if (photon_data[i] == -1 || distance2 < dis[i]) {
+              for (int j = min(photon_count_per_pixel - 1, collected_photon_count); j > i; --j) {
+                photon_data[j] = photon_data[j - 1];
+                dis[j] = dis[j - 1];
+              }
+              dis[i] = distance2;
+              photon_data[i] = __float_as_int( photon.d.y );
+              collected_photon_count = min(collected_photon_count + 1, photon_count_per_pixel);
+              break;
+            }
+        }
       }
 
       // Recurse

@@ -100,7 +100,8 @@ struct PhotonRecord
   optix::float3 ray_dir;
   optix::float3 energy;
   optix::uint   axis;
-  optix::float3 pad;
+  optix::uint   index;
+  optix::float2 pad;
 };
 
 
@@ -109,9 +110,11 @@ struct PackedPhotonRecord
   optix::float4 a;   // position.x, position.y, position.z, normal.x
   optix::float4 b;   // normal.y,   normal.z,   ray_dir.x,  ray_dir.y
   optix::float4 c;   // ray_dir.z,  energy.x,   energy.y,   energy.z
-  optix::float4 d;   // axis,       padding,    padding,    padding
+  optix::float4 d;   // axis,       index,      padding,    padding
 };
 
+const int photon_count_per_pixel = 20; // Should be multiple of 4
+typedef optix::uint PhotonIndex[photon_count_per_pixel];
 
 struct PhotonPRD
 {
