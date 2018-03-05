@@ -175,7 +175,9 @@ enum ProgramEnum {
     NUM_PROGRAMS
 };
 
-void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photons_buffer, Buffer& photon_map_buffer )
+void createContext( bool use_pbo, unsigned int photon_launch_dim,
+    Buffer& rtpass_buffer,
+    Buffer& photons_buffer, Buffer& photon_map_buffer, Buffer& photon_index_buffer )
 {
     // Set up context
     context = Context::create();
@@ -216,16 +218,16 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
     context["output_buffer"]->set( buffer );
 
     // Photon output buffer
-    Buffer photon_data = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_USER, WIDTH, HEIGHT );
-    photon_data->setElementSize( sizeof( PhotonData ) );
-    context["photon_data"]->set( photon_data );
+    photon_index_buffer = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_USER, WIDTH, HEIGHT );
+    photon_index_buffer->setElementSize( sizeof( PhotonIndex ) );
+    context["photon_index_buffer"]->set( photon_index_buffer );
 
     // Debug output buffer
     Buffer debug_buffer = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_FLOAT4, WIDTH, HEIGHT );
     context["debug_buffer"]->set( debug_buffer );
 
     // RTPass output buffer
-    Buffer rtpass_buffer = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_USER, WIDTH, HEIGHT );
+    rtpass_buffer = context->createBuffer( RT_BUFFER_OUTPUT, RT_FORMAT_USER, WIDTH, HEIGHT );
     rtpass_buffer->setElementSize( sizeof( HitRecord ) );
     context["rtpass_output_buffer"]->set( rtpass_buffer );
 
@@ -997,9 +999,13 @@ int main( int argc, char** argv )
 
     try
     {
+        Buffer rtpass_buffer;
         Buffer photons_buffer;
         Buffer photon_map_buffer;
-        createContext( use_pbo, photon_launch_dim, photons_buffer, photon_map_buffer );
+        Buffer photon_index_buffer;
+        createContext( use_pbo, photon_launch_dim,
+            rtpass_buffer,
+            photons_buffer, photon_map_buffer, photon_index_buffer );
 
         // initial camera data
         const optix::float3 camera_eye( optix::make_float3( -188.0f, 176.0f, 0.0f ) );
@@ -1034,13 +1040,62 @@ int main( int argc, char** argv )
             const unsigned int numframes = 100000;
             std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
+
                 context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
                 char char_frame[20];
-                sprintf(char_frame, "%08d.png", frame);
+                sprintf(char_frame, "%04d.png", frame);
                 if (frame <= 20 || frame % 1000 == 0)
                     sutil::writeBufferToFile( (out_file + char_frame).c_str(), getOutputBuffer() );
+
                 if (s_collect_photon_data) {
+                  if (frame <= 5) {
+                    char filename[100];
+                    sprintf(filename, "photon_data_%04d.txt", frame);
+                    FILE *f_photon_data = fopen(filename, "w");
+                    int total_photon_count = camera.height() * camera.width() * MAX_PHOTON_COUNT;
+                    fprintf(f_photon_data, "%d\n", total_photon_count);
+                    PhotonRecord* photon_record =
+                      reinterpret_cast<PhotonRecord*>( photons_buffer->map() );
+                    for (int i = 0; i < total_photon_count; ++i) {
+                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                          photon_record[i].position.x,
+                          photon_record[i].position.y,
+                          photon_record[i].position.z);
+                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                          photon_record[i].energy.x,
+                          photon_record[i].energy.y,
+                          photon_record[i].energy.z);
+                      fprintf(f_photon_data, "%d %d %.6f\n", 0, 0, 0.0);
+                    }
+                    photons_buffer->unmap();
+
+                    fprintf(f_photon_data, "%d %d\n", camera.height(), camera.width());
+                    PhotonIndex* photon_index =
+                      reinterpret_cast<PhotonIndex*>( photon_index_buffer->map() );
+                    HitRecord* hit_record =
+                      reinterpret_cast<HitRecord*>( rtpass_buffer->map() );
+                    int pixels = camera.height() * camera.width();
+                    for (int i = 0; i < pixels; ++i) {
+                      fprintf(f_photon_data, "%.6f %.6f %.6f ", 1.0, 1.0, 1.0);
+                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                          hit_record[i].position.x,
+                          hit_record[i].position.y,
+                          hit_record[i].position.z);
+                      fprintf(f_photon_data, "%d %d %.6f ", 0, 0, 0.0);
+                      int cnt = 0;
+                      while (cnt < photon_count_per_pixel
+                          && photon_index[i][cnt] != (uint)-1)
+                        ++cnt;
+                      fprintf(f_photon_data, "%d", cnt);
+                      for (int j = 0; j < cnt; ++j)
+                        fprintf(f_photon_data, " %d", photon_index[i][j]);
+                      fprintf(f_photon_data, "\n");
+                    }
+                    rtpass_buffer->unmap();
+                    photon_index_buffer->unmap();
+                    fclose(f_photon_data);
+                  }
                 }
             }
             // Note: the float4 output buffer is written in linear space without gamma correction, 

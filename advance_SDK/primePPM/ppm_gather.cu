@@ -109,7 +109,7 @@ RT_PROGRAM void gather()
   if (collect_photon_data) {
     photon_index = photon_index_buffer[launch_index];
     for (int i = 0; i < photon_count_per_pixel; ++i)
-      photon_index[i] = -1;
+      photon_index[i] = (uint)-1;
   }
 
   // Check if this is hit point lies on an emitter or hit background 
@@ -149,13 +149,13 @@ RT_PROGRAM void gather()
         accumulatePhoton(photon, rec_normal, rec_atten_Kd, num_new_photons, flux_M);
         if (collect_photon_data) {
           for (int i = 0; i < photon_count_per_pixel; ++i)
-            if (photon_data[i] == -1 || distance2 < dis[i]) {
+            if (photon_index[i] == (uint)-1 || distance2 < dis[i]) {
               for (int j = min(photon_count_per_pixel - 1, collected_photon_count); j > i; --j) {
-                photon_data[j] = photon_data[j - 1];
+                photon_index[j] = photon_index[j - 1];
                 dis[j] = dis[j - 1];
               }
               dis[i] = distance2;
-              photon_data[i] = __float_as_int( photon.d.y );
+              photon_index[i] = __float_as_int( photon.d.y );
               collected_photon_count = min(collected_photon_count + 1, photon_count_per_pixel);
               break;
             }
