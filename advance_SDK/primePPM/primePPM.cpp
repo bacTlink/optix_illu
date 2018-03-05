@@ -72,8 +72,9 @@ const unsigned int WIDTH  = 768u;
 const unsigned int HEIGHT = 768u;
 const unsigned int MAX_PHOTON_COUNT = 2u;
 const unsigned int PHOTON_LAUNCH_DIM = 512u;
-const float LIGHT_THETA = 1.15f;
-const float LIGHT_PHI = 2.19f;
+float LIGHT_THETA = 1.15f;
+float LIGHT_PHI = 2.19f;
+float LIGHT_R = 1000.0f;
 
 enum SplitChoice {
   RoundRobin,
@@ -424,7 +425,7 @@ void createGeometry( )
 void createLight( PPMLight& light )
 {
     light.is_area_light = 0; 
-    light.position  = 1000.0f * sphericalToCartesian( LIGHT_THETA, LIGHT_PHI );
+    light.position  = LIGHT_R * sphericalToCartesian( LIGHT_THETA, LIGHT_PHI );
     light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - light.position );
     light.radius    = 5.0f *0.01745329252f;
     light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
@@ -829,7 +830,7 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
                 light_changed = true;
             }
             if ( light_changed ) {
-                light.position  = 1000.0f * sphericalToCartesian( 0.5f*M_PIf-light_theta, light_phi );
+                light.position  = LIGHT_R * sphericalToCartesian( 0.5f*M_PIf-light_theta, light_phi );
                 light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - light.position );
                 context["light"]->setUserData( sizeof(PPMLight), &light );
                 accumulation_frame = 0;
@@ -988,6 +989,29 @@ int main( int argc, char** argv )
             }
             int tmp = atoi( argv[++i] );
             if (tmp > 0) photon_launch_dim = static_cast<unsigned int>(tmp);
+        }
+        else if( arg == "--light" )
+        {
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument: LIGHT_R.\n";
+                printUsageAndExit( argv[0] );
+            }
+            LIGHT_R = atof( argv[++i] );
+            
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument: LIGHT_THETA.\n";
+                printUsageAndExit( argv[0] );
+            }
+            LIGHT_THETA = atof( argv[++i] );
+
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument: LIGHT_PHI.\n";
+                printUsageAndExit( argv[0] );
+            }
+            LIGHT_PHI = atof( argv[++i] );
         }
         else
         {
