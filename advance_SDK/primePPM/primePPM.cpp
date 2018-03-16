@@ -1021,8 +1021,21 @@ int main( int argc, char** argv )
         
     }
 
-    try
-    {
+	try
+	{
+		GLFWwindow* window;
+		if (out_file.empty()) {
+			window = glfwInitialize();
+
+#ifndef __APPLE__
+			GLenum err = glewInit();
+			if (err != GLEW_OK)
+			{
+				std::cerr << "GLEW init failed: " << glewGetErrorString(err) << std::endl;
+				exit(EXIT_FAILURE);
+			}
+#endif
+		}
         Buffer rtpass_buffer;
         Buffer photons_buffer;
         Buffer photon_map_buffer;
@@ -1047,16 +1060,6 @@ int main( int argc, char** argv )
         
         if ( out_file.empty() )
         {
-            GLFWwindow* window = glfwInitialize();
-
-#ifndef __APPLE__
-            GLenum err = glewInit();
-            if (err != GLEW_OK)
-            {
-                std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
-                exit(EXIT_FAILURE);
-            }
-#endif
             glfwRun( window, camera, light, photon_launch_dim, photons_buffer, photon_map_buffer );
         }
         else
