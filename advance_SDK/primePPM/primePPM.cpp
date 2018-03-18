@@ -1064,7 +1064,7 @@ int main( int argc, char** argv )
         }
         else
         {
-            const unsigned int numframes = 100000;
+            const unsigned int numframes = 1;
             std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
 
@@ -1080,7 +1080,7 @@ int main( int argc, char** argv )
                     char filename[100];
                     sprintf(filename, "photon_data_%04d.txt", frame);
                     FILE *f_photon_data = fopen(filename, "w");
-                    int total_photon_count = camera.height() * camera.width() * MAX_PHOTON_COUNT;
+                    int total_photon_count = photon_launch_dim * photon_launch_dim * MAX_PHOTON_COUNT;
                     fprintf(f_photon_data, "%d\n", total_photon_count);
                     PhotonRecord* photon_record =
                       reinterpret_cast<PhotonRecord*>( photons_buffer->map() );
@@ -1111,12 +1111,13 @@ int main( int argc, char** argv )
                           hit_record[i].position.z);
                       fprintf(f_photon_data, "%d %d %.6f ", 0, 0, 0.0);
                       int cnt = 0;
+                      uint* photon_index_array = &(photon_index[i].pi0.x);
                       while (cnt < photon_count_per_pixel
-                          && photon_index[i][cnt] != (uint)-1)
+                          && photon_index_array[cnt] != 0)
                         ++cnt;
                       fprintf(f_photon_data, "%d", cnt);
                       for (int j = 0; j < cnt; ++j)
-                        fprintf(f_photon_data, " %d", photon_index[i][j]);
+                        fprintf(f_photon_data, " %d", photon_index_array[j] - 1);
                       fprintf(f_photon_data, "\n");
                     }
                     rtpass_buffer->unmap();

@@ -198,7 +198,7 @@ RT_PROGRAM void ppass_closest_hit()
       rec.normal = ffnormal;
       rec.ray_dir = ray.direction;
       rec.energy = hit_record.energy;
-      rec.index = hit_record.pm_index + hit_record.num_deposits;
+      rec.index = hit_record.pm_index + hit_record.num_deposits + 1;
       hit_record.num_deposits++;
     }
 

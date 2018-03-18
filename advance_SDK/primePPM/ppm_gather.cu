@@ -103,13 +103,12 @@ RT_PROGRAM void gather()
   float3 rec_flux     = make_float3( rec.d.x, rec.d.y, rec.d.z );
   float  rec_accum_atten = rec.d.w;
 
-  uint* photon_index;
+  uint photon_index[photon_count_per_pixel];
   float dis[photon_count_per_pixel];
   int collected_photon_count = 0;
   if (collect_photon_data) {
-    photon_index = photon_index_buffer[launch_index];
     for (int i = 0; i < photon_count_per_pixel; ++i)
-      photon_index[i] = (uint)-1;
+      photon_index[i] = 0;
   }
 
   // Check if this is hit point lies on an emitter or hit background 
@@ -148,17 +147,25 @@ RT_PROGRAM void gather()
       if (distance2 <= rec_radius2) {
         accumulatePhoton(photon, rec_normal, rec_atten_Kd, num_new_photons, flux_M);
         if (collect_photon_data) {
-          for (int i = 0; i < photon_count_per_pixel; ++i)
-            if (photon_index[i] == (uint)-1 || distance2 < dis[i]) {
-              for (int j = min(photon_count_per_pixel - 1, collected_photon_count); j > i; --j) {
-                photon_index[j] = photon_index[j - 1];
-                dis[j] = dis[j - 1];
-              }
-              dis[i] = distance2;
-              photon_index[i] = __float_as_int( photon.d.y );
-              collected_photon_count = min(collected_photon_count + 1, photon_count_per_pixel);
+          int target_index = -1;
+          for (int i = 0; i < collected_photon_count; ++i)
+            if (distance2 < dis[i]) {
+              target_index = i;
               break;
             }
+          if (target_index >= 0) {
+            for (int i = min(photon_count_per_pixel - 1, collected_photon_count); i > target_index; --i) {
+              photon_index[i] = photon_index[i - 1];
+              dis[i] = dis[i - 1];
+            }
+            dis[target_index] = distance2;
+            photon_index[target_index] = __float_as_int( photon.d.y );
+            collected_photon_count = min(collected_photon_count + 1, photon_count_per_pixel);
+          } else if (collected_photon_count < photon_count_per_pixel) {
+            dis[collected_photon_count] = distance2;
+            photon_index[collected_photon_count] = __float_as_int( photon.d.y );
+            ++collected_photon_count;
+          }
         }
       }
 
@@ -186,6 +193,12 @@ RT_PROGRAM void gather()
     }
     loop_iter++;
   } while ( node );
+
+  if (collect_photon_data) {
+    uint* photon_index_b = &(photon_index_buffer[launch_index].pi0.x);
+    for (int i = 0; i < photon_count_per_pixel; ++i)
+      photon_index_b[i] = photon_index[i];
+  }
 
   // Compute new N,R
   float R2 = rec_radius2;

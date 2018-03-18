@@ -114,7 +114,9 @@ struct PackedPhotonRecord
 };
 
 const int photon_count_per_pixel = 20; // Should be multiple of 4
-typedef optix::uint PhotonIndex[photon_count_per_pixel];
+struct PhotonIndex {
+  optix::uint4 pi0, pi1, pi2, pi3, pi4;
+};
 
 struct PhotonPRD
 {
