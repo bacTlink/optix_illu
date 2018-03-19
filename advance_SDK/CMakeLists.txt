@@ -308,6 +308,9 @@ add_subdirectory(optixVox)
 
 add_subdirectory(primePPM)
 
+# Tools for this SDK
+add_subdirectory(tools)
+
 # Our sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
 
