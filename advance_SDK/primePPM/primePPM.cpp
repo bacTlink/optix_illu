@@ -68,8 +68,8 @@
 using namespace optix;
 
 const char* const SAMPLE_NAME = "primePPM";
-const unsigned int WIDTH  = 768u;
-const unsigned int HEIGHT = 768u;
+const unsigned int WIDTH  = 224u;
+const unsigned int HEIGHT = 224u;
 const unsigned int MAX_PHOTON_COUNT = 2u;
 const unsigned int PHOTON_LAUNCH_DIM = 512u;
 float LIGHT_THETA = 1.15f;
@@ -1064,66 +1064,63 @@ int main( int argc, char** argv )
         }
         else
         {
-            const unsigned int numframes = 1;
+            const unsigned int numframes = 1000;
             std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
 
                 context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
-                char char_frame[20];
-                sprintf(char_frame, "%04d.png", frame);
-                if (frame <= 20 || frame % 1000 == 0)
-                    sutil::writeBufferToFile( (out_file + char_frame).c_str(), getOutputBuffer() );
+                if (frame == numframes)
+                    sutil::writeBufferToFile( (out_file + ".png").c_str(), getOutputBuffer() );
 
-                if (s_collect_photon_data) {
-                  if (frame <= 5) {
-                    char filename[100];
-                    sprintf(filename, "photon_data_%04d.txt", frame);
-                    FILE *f_photon_data = fopen(filename, "w");
-                    int total_photon_count = photon_launch_dim * photon_launch_dim * MAX_PHOTON_COUNT;
-                    fprintf(f_photon_data, "%d\n", total_photon_count);
-                    PhotonRecord* photon_record =
-                      reinterpret_cast<PhotonRecord*>( photons_buffer->map() );
-                    for (int i = 0; i < total_photon_count; ++i) {
-                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
-                          photon_record[i].position.x,
-                          photon_record[i].position.y,
-                          photon_record[i].position.z);
-                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
-                          photon_record[i].energy.x,
-                          photon_record[i].energy.y,
-                          photon_record[i].energy.z);
-                      fprintf(f_photon_data, "%d %d %.6f\n", 0, 0, 0.0);
-                    }
-                    photons_buffer->unmap();
-
-                    fprintf(f_photon_data, "%d %d\n", camera.height(), camera.width());
-                    PhotonIndex* photon_index =
-                      reinterpret_cast<PhotonIndex*>( photon_index_buffer->map() );
-                    HitRecord* hit_record =
-                      reinterpret_cast<HitRecord*>( rtpass_buffer->map() );
-                    int pixels = camera.height() * camera.width();
-                    for (int i = 0; i < pixels; ++i) {
-                      fprintf(f_photon_data, "%.6f %.6f %.6f ", 1.0, 1.0, 1.0);
-                      fprintf(f_photon_data, "%.6f %.6f %.6f ",
-                          hit_record[i].position.x,
-                          hit_record[i].position.y,
-                          hit_record[i].position.z);
-                      fprintf(f_photon_data, "%d %d %.6f ", 0, 0, 0.0);
-                      int cnt = 0;
-                      uint* photon_index_array = &(photon_index[i].pi0.x);
-                      while (cnt < photon_count_per_pixel
-                          && photon_index_array[cnt] != 0)
-                        ++cnt;
-                      fprintf(f_photon_data, "%d", cnt);
-                      for (int j = 0; j < cnt; ++j)
-                        fprintf(f_photon_data, " %d", photon_index_array[j] - 1);
-                      fprintf(f_photon_data, "\n");
-                    }
-                    rtpass_buffer->unmap();
-                    photon_index_buffer->unmap();
-                    fclose(f_photon_data);
+                if (s_collect_photon_data && frame == 1) {
+                  char filename[100];
+                  sprintf(filename, "%s.txt", out_file.c_str());
+                  FILE *f_photon_data = fopen(filename, "w");
+                  fprintf(f_photon_data, "%s.png\n", out_file.c_str());
+                  int total_photon_count = photon_launch_dim * photon_launch_dim * MAX_PHOTON_COUNT;
+                  fprintf(f_photon_data, "%d\n", total_photon_count);
+                  PhotonRecord* photon_record =
+                    reinterpret_cast<PhotonRecord*>( photons_buffer->map() );
+                  for (int i = 0; i < total_photon_count; ++i) {
+                    fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                        photon_record[i].position.x,
+                        photon_record[i].position.y,
+                        photon_record[i].position.z);
+                    fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                        photon_record[i].energy.x,
+                        photon_record[i].energy.y,
+                        photon_record[i].energy.z);
+                    fprintf(f_photon_data, "%d %d %.6f\n", 0, 0, 0.0);
                   }
+                  photons_buffer->unmap();
+
+                  fprintf(f_photon_data, "%d %d\n", camera.height(), camera.width());
+                  PhotonIndex* photon_index =
+                    reinterpret_cast<PhotonIndex*>( photon_index_buffer->map() );
+                  HitRecord* hit_record =
+                    reinterpret_cast<HitRecord*>( rtpass_buffer->map() );
+                  int pixels = camera.height() * camera.width();
+                  for (int i = 0; i < pixels; ++i) {
+                    fprintf(f_photon_data, "%.6f %.6f %.6f ", 1.0, 1.0, 1.0);
+                    fprintf(f_photon_data, "%.6f %.6f %.6f ",
+                        hit_record[i].position.x,
+                        hit_record[i].position.y,
+                        hit_record[i].position.z);
+                    fprintf(f_photon_data, "%d %d %.6f ", 0, 0, 0.0);
+                    int cnt = 0;
+                    uint* photon_index_array = &(photon_index[i].pi0.x);
+                    while (cnt < photon_count_per_pixel
+                        && photon_index_array[cnt] != 0)
+                      ++cnt;
+                    fprintf(f_photon_data, "%d", cnt);
+                    for (int j = 0; j < cnt; ++j)
+                      fprintf(f_photon_data, " %d", photon_index_array[j] - 1);
+                    fprintf(f_photon_data, "\n");
+                  }
+                  rtpass_buffer->unmap();
+                  photon_index_buffer->unmap();
+                  fclose(f_photon_data);
                 }
             }
             // Note: the float4 output buffer is written in linear space without gamma correction, 
