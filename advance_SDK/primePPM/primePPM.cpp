@@ -1045,8 +1045,10 @@ int main( int argc, char** argv )
             photons_buffer, photon_map_buffer, photon_index_buffer );
 
         // initial camera data
-        const optix::float3 camera_eye( optix::make_float3( -188.0f, 176.0f, 0.0f ) );
-        const optix::float3 camera_lookat( optix::make_float3( 0.0f, 0.0f, 0.0f ) );
+        // const optix::float3 camera_eye( optix::make_float3( -188.0f, 176.0f, 0.0f ) );
+        // const optix::float3 camera_lookat( optix::make_float3( 0.0f, 0.0f, 0.0f ) );
+        const optix::float3 camera_eye( optix::make_float3( -43.478252, 43.224010, -7.486779 ) );
+        const optix::float3 camera_lookat( optix::make_float3( 1.257751, 1.343506, -7.486779 ) );
         const optix::float3 camera_up( optix::make_float3( 0.0f, 1.0f, 0.0f ) );
         sutil::Camera camera( WIDTH, HEIGHT, 
                 &camera_eye.x, &camera_lookat.x, &camera_up.x,
