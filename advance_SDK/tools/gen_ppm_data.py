@@ -5,11 +5,11 @@ import os
 import math
 import concurrent.futures
 
-cuda_devices = [0, 1, 2, 5]
+cuda_devices = [0, 1, 2]
 binfile = os.path.join(os.path.split(os.path.realpath(__file__))[0], '../bin/primePPM')
 basic_options = ['-n', '-cpd']
-dst_dir = '/data3/lzh/rings/'
-max_threads_per_device = 15
+dst_dir = '/data3/lzh/100x224x224_ring/'
+max_threads_per_device = 12
 cuda_device_pointer = 0
 
 if not os.path.exists(dst_dir):
@@ -28,9 +28,9 @@ def run_ppm(cuda_device, light_r, light_theta, light_phi):
 
 executors = [concurrent.futures.ThreadPoolExecutor(max_workers = max_threads_per_device)
         for _ in cuda_devices]
-for light_r in np.linspace(800, 1200, 5):
-    for light_theta in np.linspace(0.0, math.pi / 2, 20):
-        for light_phi in np.linspace(0.0, math.pi * 2, 20):
+for light_r in np.linspace(10, 20, 4):
+    for light_theta in np.linspace(1.5, math.pi / 2, 5):
+        for light_phi in np.linspace(0.0, math.pi * 2, 5, endpoint = False):
             cuda_device_pointer = (cuda_device_pointer + 1) % len(cuda_devices)
             executors[cuda_device_pointer].submit(run_ppm,
                     cuda_devices[cuda_device_pointer],
