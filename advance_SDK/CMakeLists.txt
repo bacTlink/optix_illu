@@ -202,6 +202,8 @@ find_package(OptiX REQUIRED)
 # Add the path to the OptiX headers to our include paths.
 include_directories(
   "${OptiX_INCLUDE}"
+  "${CMAKE_SOURCE_DIR}/caffe_illu/include/"
+  "${CMAKE_SOURCE_DIR}/build/caffe_illu/include/"
   )
 
 ##################################################################
@@ -285,6 +287,7 @@ function(OPTIX_add_sample_executable target_name)
     optix
     glfw
     imgui
+    caffe
     ${OPENGL_gl_LIBRARY}
     ${optix_rpath}
     )

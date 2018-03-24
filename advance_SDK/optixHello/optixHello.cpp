@@ -32,6 +32,8 @@
  * A filename can be given on the command line to write the results to file. 
  */
 
+#include "caffe/caffe.hpp"
+
 #include <optix.h>
 #include <stdlib.h>
 #include <stdio.h>
