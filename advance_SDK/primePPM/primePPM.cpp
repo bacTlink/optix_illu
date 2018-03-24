@@ -205,7 +205,7 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim,
     context->setEntryPointCount( NUM_PROGRAMS );
     context->setStackSize( 800 );
 
-    context["max_depth"]->setUint( 3u );
+    context["max_depth"]->setUint( 50u );
     context["max_photon_count"]->setUint( MAX_PHOTON_COUNT );
 
     context["scene_epsilon"]->setFloat( 1.e-1f );
