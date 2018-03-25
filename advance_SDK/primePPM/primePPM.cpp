@@ -75,6 +75,7 @@ const unsigned int PHOTON_LAUNCH_DIM = 512u;
 float LIGHT_THETA = 1.15f;
 float LIGHT_PHI = 2.19f;
 float LIGHT_R = 1000.0f;
+unsigned int photon_mapping_frames = 0u;
 
 enum SplitChoice {
   RoundRobin,
@@ -204,6 +205,8 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim,
     context->setRayTypeCount( 3 );
     context->setEntryPointCount( NUM_PROGRAMS );
     context->setStackSize( 800 );
+
+    context["photon_mapping"]->setUint( photon_mapping_frames > 0 );
 
     context["max_depth"]->setUint( 50u );
     context["max_photon_count"]->setUint( MAX_PHOTON_COUNT );
@@ -964,6 +967,15 @@ int main( int argc, char** argv )
             }
             out_file = argv[++i];
         }
+        else if( arg == "-pm" || arg == "--photon-mapping"  )
+        {
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument.\n";
+                printUsageAndExit( argv[0] );
+            }
+            photon_mapping_frames = atoi( argv[++i] );
+        }
         else if( arg == "-n" || arg == "--nopbo"  )
         {
             use_pbo = false;
@@ -1066,14 +1078,19 @@ int main( int argc, char** argv )
         }
         else
         {
-            const unsigned int numframes = 1000;
-            std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
+            unsigned int numframes = photon_mapping_frames > 0 ? photon_mapping_frames : 1000;
+            std::cerr << "Accumulating " << numframes << " frames " << (photon_mapping_frames > 0 ? "(PM) " : "")
+              << "for " << out_file << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
 
-                context["frame_number"]->setFloat( static_cast<float>( frame ) );
-                launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
-                if (frame == numframes)
-                    sutil::writeBufferToFile( (out_file + ".png").c_str(), getOutputBuffer() );
+                int frame_number = photon_mapping_frames > 0 ? 1 : frame;
+                context["frame_number"]->setFloat( static_cast<float>( frame_number ) );
+                launch_all( camera, photon_launch_dim, frame_number, photons_buffer, photon_map_buffer );
+                if (frame == numframes || photon_mapping_frames > 0) {
+                    char tmp[20];
+                    sprintf(tmp, "_%d", frame);
+                    sutil::writeBufferToFile( (out_file + tmp + ".png").c_str(), getOutputBuffer() );
+                }
 
                 if (s_collect_photon_data && frame == 1) {
                   char filename[100];

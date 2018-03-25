@@ -39,6 +39,7 @@ using namespace optix;
 //
 
 rtDeclareVariable(uint,          collect_photon_data, , );
+rtDeclareVariable(uint,          photon_mapping, , );
 rtDeclareVariable(rtObject,      top_object, , );
 rtBuffer<float4, 2>              output_buffer;
 rtBuffer<float4, 2>              debug_buffer;
@@ -94,6 +95,7 @@ RT_PROGRAM void gather()
 {
   clock_t start = clock();
   PackedHitRecord rec = rtpass_output_buffer[launch_index];
+  PackedHitRecord rec_backup = rec;
   float3 rec_position = make_float3( rec.a.x, rec.a.y, rec.a.z );
   float3 rec_normal   = make_float3( rec.a.w, rec.b.x, rec.b.y );
   float3 rec_atten_Kd = make_float3( rec.b.z, rec.b.w, rec.c.x );
@@ -262,7 +264,10 @@ RT_PROGRAM void gather()
   float avg_atten = rec.d.w / (frame_number+1.0f);
   float3 direct_flux = light.power * avg_atten *rec_atten_Kd;
   
-  rtpass_output_buffer[launch_index] = rec;
+  if (photon_mapping)
+    rtpass_output_buffer[launch_index] = rec_backup;
+  else
+    rtpass_output_buffer[launch_index] = rec;
   //float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
   float3 final_color = indirect_flux; 
   output_buffer[launch_index] = make_float4(final_color);

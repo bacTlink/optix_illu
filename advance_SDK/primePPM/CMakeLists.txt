@@ -42,4 +42,3 @@ OPTIX_add_sample_executable( primePPM
     ${SAMPLES_INCLUDE_DIR}/helpers.h
     ${SAMPLES_INCLUDE_DIR}/random.h
     )
-
