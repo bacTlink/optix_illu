@@ -72,10 +72,6 @@ const unsigned int WIDTH  = 224u;
 const unsigned int HEIGHT = 224u;
 const unsigned int MAX_PHOTON_COUNT = 2u;
 const unsigned int PHOTON_LAUNCH_DIM = 512u;
-float LIGHT_THETA = 1.15f;
-float LIGHT_PHI = 2.19f;
-float LIGHT_R = 1000.0f;
-unsigned int photon_mapping_frames = 0u;
 
 enum SplitChoice {
   RoundRobin,
@@ -94,6 +90,12 @@ Context      context = 0;
 bool s_display_debug_buffer = false;
 bool s_print_timings = false;
 bool s_collect_photon_data = false;
+float LIGHT_R = 1000.0f;
+float LIGHT_THETA = 1.15f;
+float LIGHT_PHI = 2.19f;
+unsigned int photon_mapping_frames = 0u;
+float default_radius2 = 0.25f;
+bool s_multiple_radius = false;
 
 
 //------------------------------------------------------------------------------
@@ -433,7 +435,7 @@ void createLight( PPMLight& light )
     light.radius    = 5.0f *0.01745329252f;
     light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
     context["light"]->setUserData( sizeof(PPMLight), &light );
-    context["rtpass_default_radius2"]->setFloat( 0.25f);
+    context["rtpass_default_radius2"]->setFloat( default_radius2 );
     context["ambient_light"]->setFloat( 0.1f, 0.1f, 0.1f);
     const std::string full_path = std::string( sutil::samplesDir() ) + "/data/CedarCity.hdr";
     const float3 default_color = make_float3( 0.8f, 0.88f, 0.97f );
@@ -934,6 +936,10 @@ void printUsageAndExit( const std::string& argv0 )
         "  -ddb | --display-debug-buffer  Display debug buffer information to the shell.\n"
         "  -pt  | --print-timings         Print timing information.\n"
         "  -cpd | --collect-photon-data   Collect photon data.\n"
+        "  -pm  | --photon-mapping <n>    Running photon mapping for n frames.\n"
+        "  -dr2 | --default-radius2 <r2>  Using r2 for initial default radius2.\n"
+        "  -mr  | --multiple-radius       Multiple r2 with num_frames in photon mapping.\n"
+        "  --light <r theta phi>          Set light.\n"
         "App Keystrokes:\n"
         "  q  Quit\n"
         "  s  Save image to '" << SAMPLE_NAME << ".png'\n"
@@ -967,15 +973,6 @@ int main( int argc, char** argv )
             }
             out_file = argv[++i];
         }
-        else if( arg == "-pm" || arg == "--photon-mapping"  )
-        {
-            if( i == argc-1 )
-            {
-                std::cerr << "Option '" << arg << "' requires additional argument.\n";
-                printUsageAndExit( argv[0] );
-            }
-            photon_mapping_frames = atoi( argv[++i] );
-        }
         else if( arg == "-n" || arg == "--nopbo"  )
         {
             use_pbo = false;
@@ -987,10 +984,6 @@ int main( int argc, char** argv )
         else if( arg == "-pt" || arg == "--print-timings" )
         {
             s_print_timings = true;
-        }
-        else if( arg == "-cpd" || arg == "--collect-photon-data" )
-        {
-            s_collect_photon_data = true;
         }
         else if( arg == "--photon-dim" )
         {
@@ -1024,6 +1017,32 @@ int main( int argc, char** argv )
                 printUsageAndExit( argv[0] );
             }
             LIGHT_PHI = atof( argv[++i] );
+        }
+        else if( arg == "-cpd" || arg == "--collect-photon-data" )
+        {
+            s_collect_photon_data = true;
+        }
+        else if( arg == "-pm" || arg == "--photon-mapping"  )
+        {
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument.\n";
+                printUsageAndExit( argv[0] );
+            }
+            photon_mapping_frames = atoi( argv[++i] );
+        }
+        else if( arg == "-dr2" || arg == "--default-radius2"  )
+        {
+            if( i == argc-1 )
+            {
+                std::cerr << "Option '" << arg << "' requires additional argument.\n";
+                printUsageAndExit( argv[0] );
+            }
+            default_radius2 = atof( argv[++i] );
+        }
+        else if( arg == "-mr" || arg == "--multiple-radius" )
+        {
+            s_multiple_radius = true;
         }
         else
         {
@@ -1085,6 +1104,9 @@ int main( int argc, char** argv )
 
                 int frame_number = photon_mapping_frames > 0 ? 1 : frame;
                 context["frame_number"]->setFloat( static_cast<float>( frame_number ) );
+                if (s_multiple_radius) {
+                    context["rtpass_default_radius2"]->setFloat( default_radius2 * frame * 5 );
+                }
                 launch_all( camera, photon_launch_dim, frame_number, photons_buffer, photon_map_buffer );
                 if (frame == numframes || photon_mapping_frames > 0) {
                     char tmp[20];
