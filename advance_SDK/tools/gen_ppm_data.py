@@ -22,10 +22,10 @@ def run_ppm(cuda_device, light_r, light_theta, light_phi):
     options = copy.copy(basic_options)
     options.append('--file ' + os.path.join(dst_dir, 'rings--') + '--'.join(light_round_options))
     options.append('--light ' + ' '.join(light_options))
-    command = 'CUDA_VISIBLE_DEVICES=' + str(cuda_device) + ' ' + binfile + ' ' + ' '.join(options);
     options.append('-pm 10')
     options.append('-dr2 0.1')
     options.append('-mr')
+    command = 'CUDA_VISIBLE_DEVICES=' + str(cuda_device) + ' ' + binfile + ' ' + ' '.join(options);
     print command
     subprocess.call([command], shell=True)
     options.pop()
