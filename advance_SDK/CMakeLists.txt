@@ -202,9 +202,15 @@ find_package(OptiX REQUIRED)
 # Add the path to the OptiX headers to our include paths.
 include_directories(
   "${OptiX_INCLUDE}"
-  "${CMAKE_SOURCE_DIR}/caffe_illu/include/"
-  "${CMAKE_SOURCE_DIR}/build/caffe_illu/include/"
   )
+
+if(USING_CAFFE)
+  message("-- Caffe is on for OptiX")
+  include_directories(
+    "${CMAKE_SOURCE_DIR}/caffe_illu/include/"
+    "${CMAKE_SOURCE_DIR}/build/caffe_illu/include/"
+  )
+endif()
 
 ##################################################################
 # SUtil compilation
@@ -287,10 +293,12 @@ function(OPTIX_add_sample_executable target_name)
     optix
     glfw
     imgui
-    caffe
     ${OPENGL_gl_LIBRARY}
     ${optix_rpath}
     )
+  if(USING_CAFFE)
+    target_link_libraries( ${target_name} caffe)
+  endif()
   if(USING_GNU_CXX)
     target_link_libraries( ${target_name} m ) # Explicitly link against math library (C samples don't do that by default)
   endif()
@@ -310,6 +318,7 @@ add_subdirectory(optixProgressivePhotonMap)
 add_subdirectory(optixVox)
 
 add_subdirectory(primePPM)
+add_subdirectory(nobgPPM)
 
 # Tools for this SDK
 add_subdirectory(tools)
