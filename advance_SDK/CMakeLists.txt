@@ -89,6 +89,12 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 # that all policies will use version 2.6 symantics.
 cmake_policy(VERSION 2.6)
 
+if (CMAKE_VERSION VERSION_LESS "3.1")
+  set(CMAKE_CXX_FLAGS "--std=c++11 ${CMAKE_CXX_FLAGS}")
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
 # Add paths to our CMake code to the module path, so they can be found automatically by
 # CMake.
 set(CMAKE_MODULE_PATH
@@ -311,14 +317,15 @@ endfunction()
 # Just make sure you rename all the occurances of the sample's name in the C code as well
 # and the CMakeLists.txt file.
 
-add_subdirectory(optixHello)
+if(USING_CAFFE)
+  add_subdirectory(optixHello)
+endif()
 add_subdirectory(optixGlass)
 add_subdirectory(optixOcean)
 add_subdirectory(optixProgressivePhotonMap)
 add_subdirectory(optixVox)
 
 add_subdirectory(primePPM)
-add_subdirectory(nobgPPM)
 
 # Tools for this SDK
 add_subdirectory(tools)
