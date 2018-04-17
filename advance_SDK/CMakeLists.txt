@@ -89,6 +89,12 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 # that all policies will use version 2.6 symantics.
 cmake_policy(VERSION 2.6)
 
+if (CMAKE_VERSION VERSION_LESS "3.1")
+  set(CMAKE_CXX_FLAGS "--std=c++11 ${CMAKE_CXX_FLAGS}")
+else()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
 # Add paths to our CMake code to the module path, so they can be found automatically by
 # CMake.
 set(CMAKE_MODULE_PATH
@@ -202,9 +208,15 @@ find_package(OptiX REQUIRED)
 # Add the path to the OptiX headers to our include paths.
 include_directories(
   "${OptiX_INCLUDE}"
-  "${CMAKE_SOURCE_DIR}/caffe_illu/include/"
-  "${CMAKE_SOURCE_DIR}/build/caffe_illu/include/"
   )
+
+if(USING_CAFFE)
+  message("-- Caffe is on for OptiX")
+  include_directories(
+    "${CMAKE_SOURCE_DIR}/caffe_illu/include/"
+    "${CMAKE_SOURCE_DIR}/build/caffe_illu/include/"
+  )
+endif()
 
 ##################################################################
 # SUtil compilation
@@ -287,10 +299,12 @@ function(OPTIX_add_sample_executable target_name)
     optix
     glfw
     imgui
-    caffe
     ${OPENGL_gl_LIBRARY}
     ${optix_rpath}
     )
+  if(USING_CAFFE)
+    target_link_libraries( ${target_name} caffe)
+  endif()
   if(USING_GNU_CXX)
     target_link_libraries( ${target_name} m ) # Explicitly link against math library (C samples don't do that by default)
   endif()
@@ -303,7 +317,9 @@ endfunction()
 # Just make sure you rename all the occurances of the sample's name in the C code as well
 # and the CMakeLists.txt file.
 
-add_subdirectory(optixHello)
+if(USING_CAFFE)
+  add_subdirectory(optixHello)
+endif()
 add_subdirectory(optixGlass)
 add_subdirectory(optixOcean)
 add_subdirectory(optixProgressivePhotonMap)

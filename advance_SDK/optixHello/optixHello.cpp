@@ -34,6 +34,8 @@
 
 #include "caffe/caffe.hpp"
 
+#include "yaml-cpp/yaml.h"
+
 #include <optix.h>
 #include <stdlib.h>
 #include <stdio.h>
