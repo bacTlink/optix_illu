@@ -210,6 +210,14 @@ include_directories(
   "${OptiX_INCLUDE}"
   )
 
+# Search for the Yaml libraries and include files.
+find_package(Yaml REQUIRED)
+
+# Add the path to the Yaml headers to our include paths.
+include_directories(
+  "${Yaml_INCLUDE}"
+  )
+
 if(USING_CAFFE)
   message("-- Caffe is on for OptiX")
   include_directories(
@@ -297,6 +305,7 @@ function(OPTIX_add_sample_executable target_name)
   target_link_libraries( ${target_name}
     sutil_sdk
     optix
+    yaml
     glfw
     imgui
     ${OPENGL_gl_LIBRARY}
