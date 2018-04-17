@@ -215,7 +215,7 @@ find_package(Yaml REQUIRED)
 
 # Add the path to the Yaml headers to our include paths.
 include_directories(
-  "${Yaml_INCLUDE}"
+  "${yaml_INCLUDE}"
   )
 
 if(USING_CAFFE)

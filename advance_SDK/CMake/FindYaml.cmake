@@ -54,7 +54,7 @@ endmacro()
 YAML_find_api_library(yaml 1)
 
 # Include
-find_path(Yaml_INCLUDE
+find_path(yaml_INCLUDE
   NAMES yaml-cpp
   PATHS "${YAML_DIR}/yaml/include"
   NO_DEFAULT_PATH
@@ -71,11 +71,11 @@ function(YAML_report_error error_message required)
   endif()
 endfunction()
 
-if(NOT optix_LIBRARY)
-  OptiX_report_error("YAML library not found.  Please locate before proceeding, and set YAML_DIR." TRUE)
+if(NOT yaml_LIBRARY)
+  YAML_report_error("YAML library not found.  Please locate before proceeding, and set YAML_DIR." TRUE)
 endif()
-if(NOT OptiX_INCLUDE)
-  OptiX_report_error("YAML headers (optix.h and friends) not found.  Please locate before proceeding." TRUE)
+if(NOT yaml_INCLUDE)
+  YAML_report_error("YAML headers (optix.h and friends) not found.  Please locate before proceeding." TRUE)
 endif()
 
 # Macro for setting up dummy targets
