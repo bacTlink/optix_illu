@@ -62,6 +62,19 @@ class Camera
         {
             apply();
         }
+	SUTILAPI Camera(const Camera &a) : m_width(a.m_width),
+		m_height(a.m_height),
+		m_camera_eye(a.m_camera_eye),
+		m_save_camera_lookat(a.m_save_camera_lookat),
+		m_camera_lookat(a.m_camera_lookat),
+		m_camera_up(a.m_camera_up),
+		m_camera_rotate(a.m_camera_rotate),
+		m_variable_eye(a.m_variable_eye),
+		m_variable_u(a.m_variable_u),
+		m_variable_v(a.m_variable_v),
+		m_variable_w(a.m_variable_w) {
+			apply();
+		}
 
     SUTILAPI void reset_lookat();
 
@@ -89,7 +102,7 @@ class Camera
 
     optix::float3    m_camera_eye;
     optix::float3    m_camera_lookat;
-    const optix::float3 m_save_camera_lookat;
+    optix::float3    m_save_camera_lookat;
     optix::float3    m_camera_up;
     optix::float3    m_camera_u; // derived
     optix::float3    m_camera_v; // derived

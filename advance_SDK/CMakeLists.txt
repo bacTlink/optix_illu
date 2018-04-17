@@ -310,6 +310,7 @@ add_subdirectory(optixProgressivePhotonMap)
 add_subdirectory(optixVox)
 
 add_subdirectory(primePPM)
+add_subdirectory(zxlPPM)
 
 # Tools for this SDK
 add_subdirectory(tools)

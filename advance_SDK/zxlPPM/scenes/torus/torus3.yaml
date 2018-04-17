@@ -1,0 +1,18 @@
+camera_data:
+  eye: [0.93709, 0.068026, 1.17512]
+  lookat: [0.0, -0.35, 0.0]
+  up: [0.0, 1.0, 0.0]
+  vfov: 30.0
+light_data:
+  is_area_light: 1
+  target: [0.0, -0.3, 0.0]
+  position: [0.25, 0.125, -0.2]
+  direction: null
+  v1: 0.01
+  v2: 0.01
+  radius: 0.03490658504
+  power: [1.0, 1.0, 1.0]
+default_radius: 0.001
+blend_mothod: [1.0, 5.0]
+filename: "scenes/torus/torus_maya.obj"
+

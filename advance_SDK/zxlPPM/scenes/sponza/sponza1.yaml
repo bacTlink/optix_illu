@@ -1,0 +1,18 @@
+camera_data:
+  eye: [-0.5, -0.3, 0.0]
+  lookat: [0.0, -0.3, 0.0]
+  up: [0.0, 1.0, 0.0]
+  vfov: 35.0
+light_data:
+  is_area_light: 1
+  target: [0.0, 0.0, 0.0]
+  position: [0.0, 0.47, 0.0]
+  direction: null
+  v1: 0.588
+  v2: 0.126
+  radius: 0.03490658504
+  power: [1.0, 1.0, 1.0]
+default_radius: 0.0016
+blend_mothod: [0.0, 1.0]
+filename: "scenes/sponza/sponza.obj"
+

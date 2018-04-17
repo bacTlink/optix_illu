@@ -1,0 +1,16 @@
+camera_data:
+  eye: [0.7908309, -0.592016, 0.025917]
+  lookat: [-0.184200, -0.576028, 0.074177]
+  up: [0.0, 1.0, 0.0]
+  vfov: 54.0
+light_data:
+  is_area_light: 1
+  position: [-0.184200, -0.2, 0.025917]
+  direction: [0.0, -1.0, 0.0]
+  v1: 0.1
+  v2: 0.05
+  radius: 0.03490658504 
+  power: [1.0, 1.0, 1.0]
+default_radius: 0.0009
+blend_mothod: [1.0, 1.0]
+filename: "scenes/sibenik/sibenik.obj"

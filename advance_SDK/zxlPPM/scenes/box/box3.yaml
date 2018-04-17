@@ -1,0 +1,17 @@
+camera_data:
+  eye: [-0.24178, -0.133496, 2.43055]
+  lookat: [0.0, -0.05, 0.25]
+  up: [0.0, 1.0, 0.0]
+  vfov: 35.0
+light_data:
+  is_area_light: 1
+  direction: [0.0, -1.0, 0.0]
+  position: [0.323573717848716, 0.42, 0.494796481472676]
+  target: null
+  v1: 0.004
+  v2: 0.002
+  radius: 0.03490658504 
+  power: [1.0, 1.0, 1.0]
+default_radius: 0.001
+blend_mothod: [3.0, 3.0]
+filename: "scenes/box/box.obj"

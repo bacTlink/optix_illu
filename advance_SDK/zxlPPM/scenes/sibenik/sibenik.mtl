@@ -1,0 +1,110 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 25.07.2011 18:05:48
+
+newmtl sprljci
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.784314 0.784314 0.784314
+	Ks 0.000000 0.000000 0.000000
+	
+newmtl staklo
+	d 0.100000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.784314 0.784314 0.784314
+	Ks 0.000000 0.000000 0.000000
+	
+newmtl kamen_zid
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka kamen.jpg
+	map_Kd kamen.jpg
+#    map_bump kamen-bump.jpg
+#    bump kamen-bump.jpg
+
+newmtl stupovi
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka KAMEN-stup.jpg
+	map_Kd KAMEN-stup.jpg
+
+newmtl pod
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.709412 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka mramor6x6.jpg
+	map_Kd mramor6x6.jpg
+#map_bump mramor6x6-bump.jpg
+#bump mramor6x6-bump.jpg
+
+newmtl pod_tepih
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.546274 0.219608 0.183922
+	Ks 0.000000 0.000000 0.000000
+	
+newmtl pod_rub
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka kamen.jpg
+	map_Kd kamen.jpg
+#map_bump kamen-bump.jpg
+#bump kamen-bump.jpg
+
+newmtl kamen_zid_prozor
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka kamen.jpg
+	map_Kd kamen.jpg
+#map_bump kamen-bump.jpg
+#bump kamen-bump.jpg
+
+newmtl kamen_zid_parapet
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka KAMEN-stup.jpg
+	map_Kd KAMEN-stup.jpg
+
+newmtl staklo_crveno
+	d 0.800000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.441176 0.103922 0.049020
+	Ks 0.000000 0.000000 0.000000
+	
+newmtl rozeta
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.734118 0.730588 0.674118
+	Ks 0.000000 0.000000 0.000000
+	map_Ka KAMEN-stup.jpg
+	map_Kd KAMEN-stup.jpg
+
+# Green window
+newmtl staklo_zeleno
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.000000 0.000000 0.000000
+	Ks 0.8 0.8 0.8
+	
+newmtl staklo_plavo
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.000000 0.000000 0.000000
+	Ks 0.800000 0.800000 0.800000 
+	
+newmtl staklo_zuto
+	d 1.000000
+	Ka 0.000000 0.000000 0.000000
+	Kd 0.000000 0.000000 0.000000
+	Ks 0.8 0.8 0.8
+	
