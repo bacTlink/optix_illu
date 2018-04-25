@@ -91,6 +91,10 @@ Context      context = 0;
 
 bool s_display_debug_buffer = false;
 bool s_print_timings = false;
+bool s_photon_mapping = false;
+unsigned int photon_mapping_frames = 0u;
+bool s_multiple_radius = false;
+double default_radius2 = 0.25f;
 
 std::string m_model_file;
 std::string cameraId;
@@ -104,7 +108,7 @@ PPMLight m_light;
 //
 //------------------------------------------------------------------------------
     
-void mprintf(float3 &tempfloat3)
+void mprintf(const float3 &tempfloat3)
 {
 	std::cerr << tempfloat3.x << ", " << tempfloat3.y << ", " << tempfloat3.z << std::endl;
 }
@@ -210,7 +214,9 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
     context->setEntryPointCount( NUM_PROGRAMS );
     context->setStackSize( 800 );
 
-    context["max_depth"]->setUint( 3u );
+    context["photon_mapping"]->setUint( s_photon_mapping );
+
+    context["max_depth"]->setUint( 50u );
     context["max_photon_count"]->setUint( MAX_PHOTON_COUNT );
 
     context["scene_epsilon"]->setFloat( 1.e-1f );
@@ -868,10 +874,8 @@ void printUsageAndExit( const std::string& argv0 )
         "         --photon-dim <n>        Width and height of photon launch grid. Default = " << PHOTON_LAUNCH_DIM << ".\n"
         "  -ddb | --display-debug-buffer  Display debug buffer information to the shell.\n"
         "  -pt  | --print-timings         Print timing information.\n"
-		"		| --light <n>	          Use the n-th light source.\n"
-		"		| --camera <n>		      Use the n-th camera.\n"
-		"		| --radius <n>		      Use the n-th init radius.\n"
-		"		| --model <modelName>	  Use the scene called modelName.\n"
+        "  -pm  | --photon-mapping <n>    Running photon mapping for n frames.\n"
+        "  -mr  | --multiple-radius       Multiple r2 with num_frames in photon mapping.\n"
         "App Keystrokes:\n"
         "  q  Quit\n"
         "  s  Save image to '" << SAMPLE_NAME << ".png'\n"
@@ -1091,7 +1095,7 @@ void loadScene(sutil::Camera& camera) {
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
 	YAML::Node defaultRadiuses = modelConfig["default_radius"];
-	float default_radius2 = defaultRadiuses[initRadiusId].as<double>();
+	default_radius2 = defaultRadiuses[initRadiusId].as<double>();
 	context["rtpass_default_radius2"]->setFloat(default_radius2);
 	context["max_radius2"]->setFloat(default_radius2);
 	std::vector<float> blend_mothod = modelConfig["blend_mothod"].as<std::vector<float> >();
@@ -1146,6 +1150,20 @@ int main( int argc, char** argv )
             int tmp = atoi( argv[++i] );
             if (tmp > 0) photon_launch_dim = static_cast<unsigned int>(tmp);
 		}
+    else if( arg == "-pm" || arg == "--photon-mapping"  )
+    {
+        if( i == argc-1 )
+        {
+            std::cerr << "Option '" << arg << "' requires additional argument.\n";
+            printUsageAndExit( argv[0] );
+        }
+        photon_mapping_frames = atoi( argv[++i] );
+        s_photon_mapping = true;
+    }
+    else if( arg == "-mr" || arg == "--multiple-radius" )
+    {
+        s_multiple_radius = true;
+    }
 		else if( arg == "--model")
 		{
 			if (++i < argc) {
@@ -1207,16 +1225,20 @@ int main( int argc, char** argv )
 
     try
     {
-        GLFWwindow* window = glfwInitialize();
+        GLFWwindow* window;
+       
+        if (out_file.empty()) {
+            window = glfwInitialize();
 
 #ifndef __APPLE__
-        GLenum err = glewInit();
-        if (err != GLEW_OK)
-        {
-            std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
-            exit(EXIT_FAILURE);
-        }
+            GLenum err = glewInit();
+            if (err != GLEW_OK)
+            {
+                std::cerr << "GLEW init failed: " << glewGetErrorString( err ) << std::endl;
+                exit(EXIT_FAILURE);
+            }
 #endif
+        }
 
         Buffer photons_buffer;
         Buffer photon_map_buffer;
@@ -1230,8 +1252,8 @@ int main( int argc, char** argv )
                 &camera_eye.x, &camera_lookat.x, &camera_up.x,
                 context["rtpass_eye"], context["rtpass_U"], context["rtpass_V"], context["rtpass_W"] );
 
-		loadScene(camera); 
-		createEnvmap();
+        loadScene(camera); 
+        createEnvmap();
         //createGeometry();
         //createLight( m_light );
 
@@ -1243,15 +1265,24 @@ int main( int argc, char** argv )
         }
         else
         {
-            const unsigned int numframes = 16;
-            std::cerr << "Accumulating " << numframes << " frames ..." << std::endl;
-            for ( unsigned int frame = 1; frame < numframes; ++frame ) {
+            unsigned int numframes = s_photon_mapping ? photon_mapping_frames : 1000;
+            std::cerr << "Accumulating " << numframes << " frames " << (s_photon_mapping ? "(PM) " : "")
+                      << "for " << out_file << std::endl;
+            for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
+                int frame_number = s_photon_mapping ? 1 : frame;
+                context["frame_number"]->setFloat( static_cast<float>( frame_number ) );
+                if (s_multiple_radius)
+                  context["rtpass_default_radius2"]->setFloat( default_radius2 * frame * 5 );
                 context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
+                if (frame == numframes || photon_mapping_frames > 0) {
+                  char tmp[20];
+                  sprintf(tmp, "_%d", frame);
+                  sutil::writeBufferToFile( (out_file + tmp + ".png").c_str(), getOutputBuffer() );
+                }
             }
             // Note: the float4 output buffer is written in linear space without gamma correction, 
             // so it won't match the interactive display.  Apply gamma in an image viewer.
-            sutil::writeBufferToFile( out_file.c_str(), getOutputBuffer() );
             std::cerr << "Wrote " << out_file << std::endl;
             destroyContext();
         }

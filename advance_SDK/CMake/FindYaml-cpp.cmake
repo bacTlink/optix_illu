@@ -43,7 +43,7 @@ set( YAML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../" CACHE PATH "Path to OptiX instal
 macro(YAML_find_api_library name version)
   find_library(${name}_LIBRARY
     NAMES ${name}.${version} ${name}
-    PATHS "${YAML_DIR}/yaml/lib${bit_dest}" 
+    PATHS "${YAML_DIR}/yaml/lib${bit_dest}" "/usr/local/lib"
     NO_DEFAULT_PATH
     )
   find_library(${name}_LIBRARY
@@ -51,12 +51,12 @@ macro(YAML_find_api_library name version)
     )
 endmacro()
 
-YAML_find_api_library(yaml 1)
+YAML_find_api_library(yaml-cpp 1)
 
 # Include
-find_path(yaml_INCLUDE
+find_path(yaml-cpp_INCLUDE
   NAMES yaml-cpp
-  PATHS "${YAML_DIR}/yaml/include"
+  PATHS "${YAML_DIR}/yaml/include" "/usr/local/include"
   NO_DEFAULT_PATH
   )
 
@@ -71,11 +71,11 @@ function(YAML_report_error error_message required)
   endif()
 endfunction()
 
-if(NOT yaml_LIBRARY)
+if(NOT yaml-cpp_LIBRARY)
   YAML_report_error("YAML library not found.  Please locate before proceeding, and set YAML_DIR." TRUE)
 endif()
-if(NOT yaml_INCLUDE)
-  YAML_report_error("YAML headers (optix.h and friends) not found.  Please locate before proceeding." TRUE)
+if(NOT yaml-cpp_INCLUDE)
+  YAML_report_error("YAML headers (yaml.h and friends) not found.  Please locate before proceeding." TRUE)
 endif()
 
 # Macro for setting up dummy targets
@@ -113,4 +113,4 @@ function(Yaml_add_imported_library name lib_location dll_lib dependent_libs)
 endfunction()
 
 # Sets up a dummy target
-Yaml_add_imported_library(yaml "${yaml_LIBRARY}" "${optix_DLL}" "${OPENGL_LIBRARIES}")
+Yaml_add_imported_library(yaml-cpp "${yaml-cpp_LIBRARY}" "" "")

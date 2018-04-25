@@ -69,8 +69,8 @@ void accumulatePhoton( const PackedPhotonRecord& photon,
   float p_dot_hit = dot(photon_normal, rec_normal);
   if (p_dot_hit > 0.01f) { // Fudge factor for imperfect cornell box geom
     float3 photon_ray_dir = make_float3( photon.b.z, photon.b.w, photon.c.x );
-    //float3 flux = photon_energy * rec_atten_Kd; // * -dot(photon_ray_dir, rec_normal);
-    float3 flux = photon_energy;
+    float3 flux = photon_energy * rec_atten_Kd; // * -dot(photon_ray_dir, rec_normal);
+    //float3 flux = photon_energy;
     num_new_photons++;
     flux_M += flux;
   }
@@ -115,8 +115,8 @@ RT_PROGRAM void gather()
 
   // Check if this is hit point lies on an emitter or hit background 
   if( !(rec_flags & PPM_HIT) || rec_flags & PPM_OVERFLOW ) {
-    //output_buffer[launch_index] = make_float4(rec_atten_Kd);
-    output_buffer[launch_index] = make_float4(0.0, 0.0, 0.0, 0.0);
+    output_buffer[launch_index] = make_float4(rec_atten_Kd);
+    //output_buffer[launch_index] = make_float4(0.0, 0.0, 0.0, 0.0);
     return;
   }
 
@@ -268,8 +268,8 @@ RT_PROGRAM void gather()
     rtpass_output_buffer[launch_index] = rec_backup;
   else
     rtpass_output_buffer[launch_index] = rec;
-  //float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
-  float3 final_color = indirect_flux; 
+  float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
+  //float3 final_color = indirect_flux; 
   output_buffer[launch_index] = make_float4(final_color);
   if(use_debug_buffer == 1)
     debug_buffer[launch_index] = make_float4( loop_iter, new_R2, new_N, M );
