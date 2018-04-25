@@ -89,7 +89,10 @@ class Camera
     }
 
     SUTILAPI unsigned int width() const  { return m_width; }
-    SUTILAPI unsigned int height() const { return m_height; }
+	SUTILAPI unsigned int height() const { return m_height; }
+	SUTILAPI optix::float3  getEye() const { return m_camera_eye; }
+	SUTILAPI optix::float3  getLookat() const { return m_camera_lookat; }
+	SUTILAPI optix::float3  getUp() const { return m_camera_up; }
 
 
     private:

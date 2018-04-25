@@ -93,6 +93,9 @@ bool s_display_debug_buffer = false;
 bool s_print_timings = false;
 
 std::string m_model_file;
+std::string cameraId;
+std::string lightId;
+std::string initRadiusId;
 PPMLight m_light;
 
 //------------------------------------------------------------------------------
@@ -103,7 +106,7 @@ PPMLight m_light;
     
 void mprintf(float3 &tempfloat3)
 {
-	std::cerr << tempfloat3.x << ", " << tempfloat3.y << ", " << tempfloat3.z;
+	std::cerr << tempfloat3.x << ", " << tempfloat3.y << ", " << tempfloat3.z << std::endl;
 }
 // Finds the smallest power of 2 greater or equal to x.
 static unsigned int pow2roundup(unsigned int x)
@@ -734,6 +737,9 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
 
             if ( camera.process_mouse( (float)x, (float)y, ImGui::IsMouseDown(0), ImGui::IsMouseDown(1), ImGui::IsMouseDown(2) ) ) {
                 accumulation_frame = 0; 
+				mprintf(camera.getEye());
+				mprintf(camera.getLookat());
+				mprintf(camera.getUp());
             }
         }
 
@@ -1031,11 +1037,12 @@ void loadObjGeometry(const std::string& filename)
 void loadScene(sutil::Camera& camera) {
 	std::cerr << m_model_file << std::endl;
 	YAML::Node modelConfig = YAML::LoadFile(m_model_file);
-	YAML::Node cameraData = modelConfig["camera_data"];
-	std::vector<double> eye = cameraData["eye"].as<std::vector<double> >();
-	std::vector<double> lookat = cameraData["lookat"].as<std::vector<double> >();
-	std::vector<double> up = cameraData["up"].as<std::vector<double> >();
-	double vfov = cameraData["vfov"].as<double>();
+	YAML::Node cameras = modelConfig["cameras"];
+	
+	std::vector<double> eye = cameras[cameraId]["eye"].as<std::vector<double> >();
+	std::vector<double> lookat = cameras[cameraId]["lookat"].as<std::vector<double> >();
+	std::vector<double> up = cameras[cameraId]["up"].as<std::vector<double> >();
+	double vfov = cameras[cameraId]["vfov"].as<double>();
 
 	const optix::float3 camera_eye(optix::make_float3(eye[0], eye[1], eye[2]));
 	const optix::float3 camera_lookat(optix::make_float3(lookat[0], lookat[1], lookat[2]));
@@ -1046,7 +1053,8 @@ void loadScene(sutil::Camera& camera) {
 
 	camera = _camera;
 
-	YAML::Node lightData = modelConfig["light_data"];
+	YAML::Node lights = modelConfig["lights"];
+	YAML::Node lightData = lights[lightId];
 	m_light.is_area_light = lightData["is_area_light"].as<int>();
 	if (lightData["direction"].IsNull()) {
 		std::vector<double> target = lightData["target"].as<std::vector<double> >();
@@ -1078,7 +1086,8 @@ void loadScene(sutil::Camera& camera) {
 
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
-	float default_radius2 = modelConfig["default_radius"].as<double>();
+	YAML::Node defaultRadiuses = modelConfig["default_radius"];
+	float default_radius2 = defaultRadiuses[initRadiusId].as<double>();
 	context["rtpass_default_radius2"]->setFloat(default_radius2);
 	context["max_radius2"]->setFloat(default_radius2);
 	std::vector<float> blend_mothod = modelConfig["blend_mothod"].as<std::vector<float> >();
@@ -1145,6 +1154,39 @@ int main( int argc, char** argv )
 					std::cerr << "Missing argument to " << arg << "\n";
 					printUsageAndExit(argv[0]);
 				}
+			}
+			else {
+				std::cerr << "Missing argument to " << arg << "\n";
+				printUsageAndExit(argv[0]);
+			}
+		} 
+		else if (arg == "--camera") 
+		{
+			if (++i < argc) {
+				std::string cameraNum(argv[i]);
+				cameraId = cameraNum;
+			}
+			else {
+				std::cerr << "Missing argument to " << arg << "\n";
+				printUsageAndExit(argv[0]);
+			}
+		}
+		else if (arg == "--light")
+		{
+			if (++i < argc) {
+				std::string lightNum(argv[i]);
+				lightId = lightNum;
+			}
+			else {
+				std::cerr << "Missing argument to " << arg << "\n";
+				printUsageAndExit(argv[0]);
+			}
+		}
+		else if (arg == "--radius")
+		{
+			if (++i < argc) {
+				std::string radiusNum(argv[i]);
+				initRadiusId = radiusNum;
 			}
 			else {
 				std::cerr << "Missing argument to " << arg << "\n";
