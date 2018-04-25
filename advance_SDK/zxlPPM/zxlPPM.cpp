@@ -69,10 +69,10 @@ using namespace optix;
 #include <yaml-cpp/yaml.h>
 
 const char* const SAMPLE_NAME = "zxlPPM";
-const unsigned int WIDTH  = 768u;
-const unsigned int HEIGHT = 768u;
+const unsigned int WIDTH  = 672u;
+const unsigned int HEIGHT = 672u;
 const unsigned int MAX_PHOTON_COUNT = 2u;
-const unsigned int PHOTON_LAUNCH_DIM = 100u;
+const unsigned int PHOTON_LAUNCH_DIM = 512u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
 
@@ -90,6 +90,7 @@ enum SplitChoice {
 
 Context      context = 0;
 
+bool s_KNN = false;
 bool s_display_debug_buffer = false;
 bool s_print_timings = false;
 bool s_photon_mapping = false;
@@ -795,7 +796,7 @@ void launch_all( const sutil::Camera& camera, unsigned int photon_launch_dim, un
         if (s_print_timings) std::cerr << "finished. " << t1 - t0 << std::endl;
     }
 
-	if (accumulation_frame == 1) {
+	if (accumulation_frame == 1 && s_KNN) {
 
 		if (s_print_timings) std::cerr << "Starting initRadius pass ... ";
 		double t0 = sutil::currentTime();
@@ -1154,11 +1155,9 @@ void loadObjGeometry(const std::string& filename)
 
 
 void loadScene(sutil::Camera& camera) {
-	std::cerr << m_model_file << std::endl;
 	modelConfig = YAML::LoadFile(m_model_file);
 	YAML::Node cameras = modelConfig["cameras"];
 	
-	std::cerr << cameraId << std::endl;
 	std::vector<double> eye = cameras[cameraId]["eye"].as<std::vector<double> >();
 	std::vector<double> lookat = cameras[cameraId]["lookat"].as<std::vector<double> >();
 	std::vector<double> up = cameras[cameraId]["up"].as<std::vector<double> >();
@@ -1284,6 +1283,8 @@ int main( int argc, char** argv )
 				std::string model(argv[i]);
 				if (++i < argc) {
 					std::string modelNum = std::string(argv[i]);
+          if (modelNum == "null")
+            modelNum = "";
 					m_model_file = std::string(sutil::samplesDir()) + "/zxlPPM/scenes/" + model + "/" + model + modelNum + ".yaml";
 				}
 				else {
@@ -1341,7 +1342,7 @@ int main( int argc, char** argv )
     {
         GLFWwindow* window;
        
-        if (out_file.empty()) {
+        if (out_file.empty() || use_pbo) {
             window = glfwInitialize();
 
 #ifndef __APPLE__
@@ -1385,10 +1386,10 @@ int main( int argc, char** argv )
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
                 int frame_number = s_photon_mapping ? 1 : frame;
                 context["frame_number"]->setFloat( static_cast<float>( frame_number ) );
-                if (s_multiple_radius)
-                  context["rtpass_default_radius2"]->setFloat( default_radius2 * frame * 5 );
-                context["frame_number"]->setFloat( static_cast<float>( frame ) );
-                launch_all( camera, photon_launch_dim, frame, photons_buffer, photon_map_buffer );
+                if (s_multiple_radius) {
+                  context["rtpass_default_radius2"]->setFloat( default_radius2 * frame * frame );
+                }
+                launch_all( camera, photon_launch_dim, frame_number, photons_buffer, photon_map_buffer );
                 if (frame == numframes || photon_mapping_frames > 0) {
                   char tmp[20];
                   sprintf(tmp, "_%d", frame);

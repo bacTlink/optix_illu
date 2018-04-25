@@ -58,8 +58,6 @@ rtDeclareVariable(ShadowPRD, shadow_prd, rtPayload, );
 #define MAX_DEPTH 20 // one MILLION photons
 #define MAX_KNN 1010
 
-static __device__ inline float sqr(float a) { return a * a; }
-
 RT_PROGRAM void initRadius()
 {
 	PackedHitRecord rec = rtpass_output_buffer[launch_index];
@@ -82,7 +80,6 @@ RT_PROGRAM void initRadius()
 
 	int Photon_Map_size = photon_map.size(); // for debugging
 
-	uint num_new_photons = 0u;
 	size_t2 screen_size = output_buffer.size();
 	uint loop_iter = 0;
 	
