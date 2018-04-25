@@ -59,6 +59,8 @@ struct PPMLight
   optix::float3 anchor;
   optix::float3 v1;
   optix::float3 v2;
+  float v1Len;
+  float v2Len;
 };
 
 struct HitRecord

@@ -61,6 +61,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <stdint.h>
 
@@ -101,6 +102,7 @@ std::string cameraId;
 std::string lightId;
 std::string initRadiusId;
 PPMLight m_light;
+YAML::Node modelConfig;
 
 //------------------------------------------------------------------------------
 //
@@ -551,14 +553,18 @@ void keyCallback( GLFWwindow* window, int key, int scancode, int action, int mod
         switch( key )
         {
             case GLFW_KEY_Q:
-            case GLFW_KEY_ESCAPE:
-                if( context )
-                    context->destroy();
-                if( window )
-                    glfwDestroyWindow( window );
-                glfwTerminate();
-                exit(EXIT_SUCCESS);
-
+            case GLFW_KEY_ESCAPE: 
+			{
+				std::ofstream fout("fileUpdate.yaml");
+				fout << modelConfig;
+				fout.close();
+				if (context)
+					context->destroy();
+				if (window)
+					glfwDestroyWindow(window);
+				glfwTerminate();
+				exit(EXIT_SUCCESS);
+			}
             case( GLFW_KEY_S ):
             {
                 const std::string outputImage = std::string(SAMPLE_NAME) + ".png";
@@ -575,6 +581,114 @@ void keyCallback( GLFWwindow* window, int key, int scancode, int action, int mod
                handled = true;
                break;
             }
+			case( GLFW_KEY_C ):
+			{
+				CallbackData* cb = static_cast<CallbackData*>(glfwGetWindowUserPointer(window));
+
+				YAML::Node cameras = modelConfig["cameras"];
+
+				YAML::Node camera;
+
+				optix::float3 eye = cb->camera.getEye();
+				camera["eye"].push_back(eye.x);
+				camera["eye"].push_back(eye.y);
+				camera["eye"].push_back(eye.z);
+
+				optix::float3 lookat = cb->camera.getLookat();
+				camera["lookat"].push_back(lookat.x);
+				camera["lookat"].push_back(lookat.y);
+				camera["lookat"].push_back(lookat.z);
+
+				optix::float3 up = cb->camera.getUp();
+				camera["up"].push_back(up.x);
+				camera["up"].push_back(up.y);
+				camera["up"].push_back(up.z);
+
+				int size = cameras.size();
+				cameras[size] = camera;
+				break;
+			}
+			case(GLFW_KEY_L):
+			{
+				CallbackData* cb = static_cast<CallbackData*>(glfwGetWindowUserPointer(window));
+
+				YAML::Node lights = modelConfig["lights"];
+
+				YAML::Node light; 
+
+				light["is_area_light"] = m_light.is_area_light;
+
+				if (m_light.is_area_light) {
+					light["direction"].push_back(m_light.direction.x);
+					light["direction"].push_back(m_light.direction.y);
+					light["direction"].push_back(m_light.direction.z);
+
+					light["position"].push_back(m_light.anchor.x);
+					light["position"].push_back(m_light.anchor.y);
+					light["position"].push_back(m_light.anchor.z);
+
+					light["v1"] = m_light.v1Len;
+					light["v2"] = m_light.v2Len;
+					light["radius"] = m_light.radius;
+
+					light["power"].push_back(m_light.power.x);
+					light["power"].push_back(m_light.power.y);
+					light["power"].push_back(m_light.power.z);
+				}
+				else {
+					std::cerr << "light is wrong!!! hahahahaha" << std::endl;
+				}
+			
+				int size = lights.size();
+				lights[size] = light;
+				break;
+			}
+			case(GLFW_KEY_RIGHT_BRACKET):
+			{
+				m_light.v1Len += 0.001;
+				m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+				float3 m_light_t_normal;
+				m_light_t_normal = cross(m_light.v1, m_light.direction);
+				m_light.v1 = cross(m_light.direction, m_light_t_normal);
+				break;
+			}
+			case(GLFW_KEY_LEFT_BRACKET):
+			{
+				if (m_light.v1Len > 0.002) {
+					m_light.v1Len -= 0.001;
+					m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+					float3 m_light_t_normal;
+					m_light_t_normal = cross(m_light.v1, m_light.direction);
+					m_light.v1 = cross(m_light.direction, m_light_t_normal);
+				}
+				else {
+					std::cerr << "Light Source is Too Small" << std::endl;
+				}
+				break;
+			}
+			case(GLFW_KEY_EQUAL):
+			{
+				m_light.v2Len += 0.001;
+				m_light.v2 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+				float3 m_light_t_normal;
+				m_light_t_normal = cross(m_light.v2, m_light.direction);
+				m_light.v2 = cross(m_light.direction, m_light_t_normal);
+				break;
+			}
+			case(GLFW_KEY_MINUS):
+			{
+				if (m_light.v2Len > 0.002) {
+					m_light.v2Len -= 0.001;
+					m_light.v2 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+					float3 m_light_t_normal;
+					m_light_t_normal = cross(m_light.v2, m_light.direction);
+					m_light.v2 = cross(m_light.direction, m_light_t_normal);
+				}
+				else {
+					std::cerr << "Light Source is Too Small" << std::endl;
+				}
+				break;
+			}
         }
     }
 
@@ -743,9 +857,6 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
 
             if ( camera.process_mouse( (float)x, (float)y, ImGui::IsMouseDown(0), ImGui::IsMouseDown(1), ImGui::IsMouseDown(2) ) ) {
                 accumulation_frame = 0; 
-				mprintf(camera.getEye());
-				mprintf(camera.getLookat());
-				mprintf(camera.getUp());
             }
         }
 
@@ -1044,13 +1155,14 @@ void loadObjGeometry(const std::string& filename)
 
 void loadScene(sutil::Camera& camera) {
 	std::cerr << m_model_file << std::endl;
-	YAML::Node modelConfig = YAML::LoadFile(m_model_file);
+	modelConfig = YAML::LoadFile(m_model_file);
 	YAML::Node cameras = modelConfig["cameras"];
 	
+	std::cerr << cameraId << std::endl;
 	std::vector<double> eye = cameras[cameraId]["eye"].as<std::vector<double> >();
 	std::vector<double> lookat = cameras[cameraId]["lookat"].as<std::vector<double> >();
 	std::vector<double> up = cameras[cameraId]["up"].as<std::vector<double> >();
-	double vfov = cameras[cameraId]["vfov"].as<double>();
+	//double vfov = cameras[cameraId]["vfov"].as<double>();
 
 	const optix::float3 camera_eye(optix::make_float3(eye[0], eye[1], eye[2]));
 	const optix::float3 camera_lookat(optix::make_float3(lookat[0], lookat[1], lookat[2]));
@@ -1080,8 +1192,10 @@ void loadScene(sutil::Camera& camera) {
 	}
 	if (m_light.is_area_light) {
 		m_light.anchor = m_light.position + m_light.direction * 0.0f;
-		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * lightData["v1"].as<double>();
-		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * lightData["v2"].as<double>();
+		m_light.v1Len = lightData["v1"].as<double>();
+		m_light.v2Len = lightData["v2"].as<double>();
+		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * m_light.v2Len;
 		float3 m_light_t_normal;
 		m_light_t_normal = cross(m_light.v1, m_light.direction);
 		m_light.v1 = cross(m_light.direction, m_light_t_normal);
