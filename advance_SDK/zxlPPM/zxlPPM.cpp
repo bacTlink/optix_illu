@@ -72,7 +72,7 @@ const char* const SAMPLE_NAME = "zxlPPM";
 const unsigned int WIDTH  = 768u;
 const unsigned int HEIGHT = 768u;
 const unsigned int MAX_PHOTON_COUNT = 2u;
-const unsigned int PHOTON_LAUNCH_DIM = 512u;
+const unsigned int PHOTON_LAUNCH_DIM = 100u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
 
