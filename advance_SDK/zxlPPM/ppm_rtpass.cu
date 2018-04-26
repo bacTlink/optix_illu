@@ -45,6 +45,7 @@ rtDeclareVariable(rtObject,      top_object, , );
 //
 rtBuffer<HitRecord, 2>           rtpass_output_buffer;
 rtBuffer<uint2, 2>               image_rnd_seeds;
+rtDeclareVariable(uint,          max_depth, , );
 rtDeclareVariable(float,         rtpass_default_radius2, , );
 rtDeclareVariable(float3,        rtpass_eye, , );
 rtDeclareVariable(float3,        rtpass_U, , );
@@ -138,7 +139,7 @@ RT_PROGRAM void rtpass_closest_hit()
     rec.flux = make_float3(0.0f, 0.0f, 0.0f);
     
     rtpass_output_buffer[launch_index] = rec;
-	return;
+    return;
   }
   if (Alpha < 1) {
 
@@ -187,7 +188,7 @@ RT_PROGRAM void rtpass_closest_hit()
 		  HitPRD reflect_prd = hit_prd;
 		  reflect_prd.attenuation *= Ks;
 		  reflect_prd.ray_depth++;
-		  if (reflect_prd.ray_depth >= 10) return;
+		  if (reflect_prd.ray_depth >= max_depth) return;
 		  optix::Ray refl_ray(hit_point, Reflect_dir, rtpass_ray_type, scene_epsilon);
 		  rtTrace(top_object, refl_ray, reflect_prd);
 	  }

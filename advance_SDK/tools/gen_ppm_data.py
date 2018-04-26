@@ -13,7 +13,7 @@ binfilename = '../bin/zxlPPM'
 binfile = os.path.join(os.path.split(os.path.realpath(__file__))[0], binfilename)
 basic_options = ['-n']
 dst_dir = '/home/bactlink/disk/10000x224x224_' + model_name + '_diff/'
-max_threads_per_device = 2
+max_threads_per_device = 20
 
 def get_yaml(filename):
     with open(filename) as f:

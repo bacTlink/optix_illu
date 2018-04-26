@@ -216,7 +216,7 @@ RT_PROGRAM void ppass_closest_hit()
 
 			PhotonPRD refract_prd = hit_record;
 			refract_prd.ray_depth++;
-			if (refract_prd.ray_depth >= 10) return;
+			if (refract_prd.ray_depth >= max_depth) return;
 
 			float refraction_facter = 1.5f;
 			float critical_sina = 1.0f / refraction_facter;
@@ -259,7 +259,7 @@ RT_PROGRAM void ppass_closest_hit()
 				PhotonPRD reflect_prd = hit_record;
 				reflect_prd.energy *= Ks;
 				reflect_prd.ray_depth++;
-				if (reflect_prd.ray_depth >= 10) return;
+				if (reflect_prd.ray_depth >= max_depth) return;
 				optix::Ray refl_ray(hit_point, Reflect_dir, ppass_and_gather_ray_type, scene_epsilon);
 				rtTrace(top_object, refl_ray, reflect_prd);
 			}

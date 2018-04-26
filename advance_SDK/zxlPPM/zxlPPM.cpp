@@ -71,7 +71,7 @@ using namespace optix;
 const char* const SAMPLE_NAME = "zxlPPM";
 const unsigned int WIDTH  = 672u;
 const unsigned int HEIGHT = 672u;
-const unsigned int MAX_PHOTON_COUNT = 2u;
+const unsigned int MAX_PHOTON_COUNT = 10u;
 const unsigned int PHOTON_LAUNCH_DIM = 512u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
@@ -1219,7 +1219,7 @@ void loadScene(sutil::Camera& camera) {
 	}
 	m_light.radius = lightData["radius"].as<double>();
 	std::vector<double> power = lightData["power"].as<std::vector<double> >();
-	m_light.power = make_float3(power[0], power[1], power[2]);
+	m_light.power = make_float3(power[0], power[1], power[2]) * 10;
 
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
