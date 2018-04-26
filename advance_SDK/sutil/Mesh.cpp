@@ -578,6 +578,7 @@ void MeshLoader::Impl::loadMeshOBJ( Mesh& mesh )
     mat_params.Kr[2]  = m_materials[i].specular[2];
 
     mat_params.exp    = m_materials[i].shininess;
+	mat_params.dissolve = m_materials[i].dissolve;
 
     mesh.mat_params[i] = mat_params;
   }

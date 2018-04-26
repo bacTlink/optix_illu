@@ -1,4 +1,4 @@
-camera_data:
+cameras:
   - eye: [0.93709, 0.068026, 1.17512]
     lookat: [0.0, -0.35, 0.0]
     up: [0.0, 1.0, 0.0]
@@ -11,20 +11,18 @@ camera_data:
     lookat: [0.0, -0.35, 0.0]
     up: [0.0, 1.0, 0.0]
     vfov: 30.0
-m_light:
+lights:
   - is_area_light: 1
-    space:
-      - anchor: null
-        direction: [-0.25, -0.425, -0.2]
-        position: [0.25, 0.125, -0.2]
+    direction: [-0.25, -0.425, -0.2]
+    position: [0.25, 0.125, -0.2]
     point_size: 0.01
-    v1: [1.0, 0.0, 0.0]
-    v2: [0.0, 0.0, 1.0]
+    v1: 1.0
+    v2: 1.0
     radius: 0.03490658504 
     power: [1.0, 1.0, 1.0]
   - is_area_light: 0
     position: [0.0, 0.0, 0.0]
-default_radius": 
+default_radius: 
   - 0.0001
   - 0.004
   - 0.00004

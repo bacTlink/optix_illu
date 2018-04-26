@@ -230,7 +230,8 @@ RT_PROGRAM void gather()
     rtpass_output_buffer[launch_index] = rec_backup;
   else
     rtpass_output_buffer[launch_index] = rec;
-  float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
+  //float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
+  float3 final_color = indirect_flux;
   output_buffer[launch_index] = make_float4(final_color);
   if(use_debug_buffer == 1)
     debug_buffer[launch_index] = make_float4( loop_iter, new_R2, new_N, M );

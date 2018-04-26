@@ -52,6 +52,7 @@ struct MaterialParams
   float               Kr[3];
   float               Ka[3];
   float               exp;
+  float				  dissolve;
 
 };
 

@@ -1134,6 +1134,7 @@ void loadObjGeometry(const std::string& filename)
 		material["Ks"]->set3fv(mesh.mat_params[i].Ks);
 		material["grid_color"]->setFloat(0.5f, 0.5f, 0.5f);
 		material["use_grid"]->setUint(mesh.mat_params[i].name == "01_-_Default" ? 1u : 0);
+		material["Alpha"]->setFloat(mesh.mat_params[i].dissolve);
 
 		optix_materials.push_back(material);
 	}
@@ -1211,9 +1212,9 @@ void loadScene(sutil::Camera& camera) {
 	default_radius2 = defaultRadiuses[initRadiusId].as<double>();
 	context["rtpass_default_radius2"]->setFloat(default_radius2);
 	context["max_radius2"]->setFloat(default_radius2);
-	std::vector<float> blend_mothod = modelConfig["blend_mothod"].as<std::vector<float> >();
-	context["direct_ratio"]->setFloat(blend_mothod[0]);
-	context["indirect_ratio"]->setFloat(blend_mothod[1]);
+	//std::vector<float> blend_mothod = modelConfig["blend_mothod"].as<std::vector<float> >();
+	//context["direct_ratio"]->setFloat(blend_mothod[0]);
+	//context["indirect_ratio"]->setFloat(blend_mothod[1]);
 
 	loadObjGeometry(modelConfig["filename"].as<std::string>());
 

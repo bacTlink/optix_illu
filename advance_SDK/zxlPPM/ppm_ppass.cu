@@ -173,6 +173,7 @@ RT_PROGRAM void ppass_camera()
 //
 rtDeclareVariable(float3,  Ks, , )={0,0,0};
 rtDeclareVariable(float3,  Kd, , )={0.7,0.7,0.7};
+rtDeclareVariable(float,   Alpha, , );
 rtDeclareVariable(float3,  emitted, , )={0,0,0};
 rtDeclareVariable(float3, geometric_normal, attribute geometric_normal, ); 
 rtDeclareVariable(float3, shading_normal, attribute shading_normal, ); 
@@ -181,42 +182,88 @@ rtDeclareVariable(float, t_hit, rtIntersectionDistance, );
 rtDeclareVariable(PhotonPRD, hit_record, rtPayload, );
 
 RT_PROGRAM void ppass_closest_hit()
-{
-  // Check if this is a light source
-  float3 world_shading_normal   = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, shading_normal ) );
-  float3 world_geometric_normal = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, geometric_normal ) );
-  float3 ffnormal     = faceforward( world_shading_normal, -ray.direction, world_geometric_normal );
+{// Check if this is a light source
+	float3 world_shading_normal = normalize(rtTransformNormal(RT_OBJECT_TO_WORLD, shading_normal));
+	float3 world_geometric_normal = normalize(rtTransformNormal(RT_OBJECT_TO_WORLD, geometric_normal));
+	float3 ffnormal = faceforward(world_shading_normal, -ray.direction, world_geometric_normal);
 
-  float3 hit_point = ray.origin + t_hit*ray.direction;
-  float3 new_ray_dir;
+	float3 hit_point = ray.origin + t_hit*ray.direction;
+	float3 new_ray_dir;
+	float3 direction = ray.direction;
 
-  if( fmaxf( Kd ) > 0.0f ) {
-    // We hit a diffuse surface; record hit if it has bounced at least once
-    if( hit_record.ray_depth >= 0 ) {
-      PhotonRecord& rec = ppass_output_buffer[hit_record.pm_index + hit_record.num_deposits];
-      rec.position = hit_point;
-      rec.normal = ffnormal;
-      rec.ray_dir = ray.direction;
-      rec.energy = hit_record.energy;
-      hit_record.num_deposits++;
-    }
+	float n_dot_l = dot(ffnormal, -ray.direction);
 
-    hit_record.energy = Kd * hit_record.energy; 
-    float3 U, V, W;
-    create_onb(ffnormal, U, V, W);
-    sampleUnitHemisphere(rnd_from_uint2(hit_record.sample), U, V, W, new_ray_dir);
+	if (fmaxf(Kd) > 0.0f && n_dot_l > 0.f) {
+		// We hit a diffuse surface; record hit if it has bounced at least once
+		if (hit_record.ray_depth > 0) {
+			PhotonRecord& rec = ppass_output_buffer[hit_record.pm_index + hit_record.num_deposits];
+			rec.position = hit_point;
+			rec.normal = ffnormal;
+			rec.ray_dir = ray.direction;
+			rec.energy = hit_record.energy * n_dot_l;
+			hit_record.num_deposits++;
+			if (hit_record.num_deposits >= max_photon_count) return;
+		}
 
-  } else {
-    hit_record.energy = Ks * hit_record.energy;
-    // Make reflection ray
-    new_ray_dir = reflect( ray.direction, ffnormal );
-  }
+		hit_record.energy = Kd * hit_record.energy * n_dot_l;
+		float3 U, V, W;
+		create_onb(ffnormal, U, V, W);
+		sampleUnitHemisphere(rnd_from_uint2(hit_record.sample), U, V, W, new_ray_dir);
 
-  hit_record.ray_depth++;
-  if ( hit_record.num_deposits >= max_photon_count || hit_record.ray_depth >= max_depth)
-    return;
+	}
+	else {
+		if (Alpha < 1) {
 
-  optix::Ray new_ray( hit_point, new_ray_dir, ppass_and_gather_ray_type, scene_epsilon );
-  rtTrace(top_object, new_ray, hit_record);
+			PhotonPRD refract_prd = hit_record;
+			refract_prd.ray_depth++;
+			if (refract_prd.ray_depth >= 10) return;
+
+			float refraction_facter = 1.5f;
+			float critical_sina = 1.0f / refraction_facter;
+			float critical_radian = asinf(critical_sina);
+
+			float max_incidence_radian = M_PIf / 2.0f;
+			float max_emergent_radian = M_PIf * 41.8f / 180.0f;
+			float top_refacter = 0.96f;
+			float bottom_incidence_t = powf(1 - top_refacter, 1 / max_incidence_radian);
+			float bottom_emergent_t = powf(1 - top_refacter, 1 / max_emergent_radian);
+			float K_refacter = 1;
+
+			float3 R;
+			if (refract(R, direction, world_shading_normal, refraction_facter) == true) {
+				float incidence_sina = sqrtf(1.0 - powf(fabsf(dot(direction, world_shading_normal)), 2.0f));
+				float incidence_radian = asinf(incidence_sina);
+
+				if (dot(direction, world_shading_normal) < 0)
+					K_refacter = 1 - pow(bottom_incidence_t, max_incidence_radian - incidence_radian);
+				else
+					K_refacter = 1 - pow(bottom_emergent_t, max_emergent_radian - incidence_radian);
+
+				refract_prd.energy *= K_refacter;
+
+				optix::Ray refr_ray(hit_point, R, ppass_and_gather_ray_type, scene_epsilon);
+				rtTrace(top_object, refr_ray, refract_prd);
+			}
+			else {
+				refract_prd.energy *= 1.0f;
+				if (fmaxf(Ks) > 0.0f) {
+					R = reflect(direction, ffnormal);
+					optix::Ray refr_ray(hit_point, R, ppass_and_gather_ray_type, scene_epsilon);
+					rtTrace(top_object, refr_ray, refract_prd);
+				}
+			}
+		}
+		else {
+			if (fmaxf(Ks) > 0.0f) {
+				float3 Reflect_dir = reflect(direction, ffnormal);
+				PhotonPRD reflect_prd = hit_record;
+				reflect_prd.energy *= Ks;
+				reflect_prd.ray_depth++;
+				if (reflect_prd.ray_depth >= 10) return;
+				optix::Ray refl_ray(hit_point, Reflect_dir, ppass_and_gather_ray_type, scene_epsilon);
+				rtTrace(top_object, refl_ray, reflect_prd);
+			}
+		}
+	}
 }
 

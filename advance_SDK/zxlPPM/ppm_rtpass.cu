@@ -81,6 +81,7 @@ RT_PROGRAM void rtpass_camera()
 // 
 rtDeclareVariable(float3,  Ks, , )={0,0,0};
 rtDeclareVariable(float3,  Kd, , )={0.7,0.7,0.7};
+rtDeclareVariable(float, Alpha, , );
 rtDeclareVariable(float3,  grid_color, , );
 rtDeclareVariable(uint,    use_grid, , )=0;
 rtDeclareVariable(float3,  emitted, , )={0,0,0};
@@ -137,13 +138,59 @@ RT_PROGRAM void rtpass_closest_hit()
     rec.flux = make_float3(0.0f, 0.0f, 0.0f);
     
     rtpass_output_buffer[launch_index] = rec;
-  } else {
-    // Make reflection ray
-    hit_prd.attenuation = hit_prd.attenuation * Ks;
-    hit_prd.ray_depth++;
-    float3 R = reflect( direction, ffnormal );
-    optix::Ray refl_ray( hit_point, R, rtpass_ray_type, scene_epsilon );
-    rtTrace( top_object, refl_ray, hit_prd );
+	return;
+  }
+  if (Alpha < 1) {
+
+	  HitPRD refract_prd = hit_prd;
+	  refract_prd.ray_depth++;
+
+	  float refraction_facter = 1.5f;
+	  float critical_sina = 1.0f / refraction_facter;
+	  float critical_radian = asinf(critical_sina);
+
+	  float max_incidence_radian = M_PIf / 2.0f;
+	  float max_emergent_radian = M_PIf * 41.8f / 180.0f;
+	  float top_refacter = 0.96f;
+	  float bottom_incidence_t = powf(1 - top_refacter, 1 / max_incidence_radian);
+	  float bottom_emergent_t = powf(1 - top_refacter, 1 / max_emergent_radian);
+	  float K_refacter = 1;
+
+	  float3 R;
+	  if (refract(R, direction, world_shading_normal, refraction_facter) == true) {
+		  float incidence_sina = sqrtf(1.0 - powf(fabsf(dot(direction, world_shading_normal)), 2.0f));
+		  float incidence_radian = asinf(incidence_sina);
+
+		  if (dot(direction, world_shading_normal) < 0)
+			  K_refacter = 1 - pow(bottom_incidence_t, max_incidence_radian - incidence_radian);
+		  else
+			  K_refacter = 1 - pow(bottom_emergent_t, max_emergent_radian - incidence_radian);
+
+		  refract_prd.attenuation *= K_refacter;
+
+		  optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
+		  rtTrace(top_object, refr_ray, refract_prd);
+	  }
+	  else {
+		  refract_prd.attenuation *= 1.0f;
+		  if (fmaxf(Ks) > 0.0f)
+		  {
+			  R = reflect(direction, ffnormal);
+			  optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
+			  rtTrace(top_object, refr_ray, refract_prd);
+		  }
+	  }
+  }
+  else {
+	  if (fmaxf(Ks) > 0.0f) {
+		  float3 Reflect_dir = reflect(direction, ffnormal);
+		  HitPRD reflect_prd = hit_prd;
+		  reflect_prd.attenuation *= Ks;
+		  reflect_prd.ray_depth++;
+		  if (reflect_prd.ray_depth >= 10) return;
+		  optix::Ray refl_ray(hit_point, Reflect_dir, rtpass_ray_type, scene_epsilon);
+		  rtTrace(top_object, refl_ray, reflect_prd);
+	  }
   }
 }
 
