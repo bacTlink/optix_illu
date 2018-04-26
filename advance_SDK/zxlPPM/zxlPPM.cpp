@@ -835,6 +835,9 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
     unsigned int accumulation_frame = 0;
     float light_phi = LIGHT_PHI;
     float light_theta = ( 0.5f*M_PIf - LIGHT_THETA );
+	float light_x = 0;
+	float light_y = 0;
+	float light_z = 0;
 
     // Expose user data for access in GLFW callback functions when the window is resized, etc.
     // This avoids having to make it global.
@@ -885,9 +888,21 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
             if (ImGui::SliderAngle( "light elevation", &light_theta, 0.0f, 90.0f ) )  {
                 light_changed = true;
             }
+			if (ImGui::SliderFloat("light x", &light_x, -1.0f, 1.0f, 0, 1.f)) {
+				light_changed = true;
+			}
+			if (ImGui::SliderFloat("light y", &light_y, -1.0f, 1.0f, 0, 1.f)) {
+				light_changed = true;
+			}
+			if (ImGui::SliderFloat("light z", &light_z, -1.0f, 1.0f, 0, 1.f)) {
+				light_changed = true;
+			}
             if ( light_changed ) {
                 light.position  = 1000.0f * sphericalToCartesian( 0.5f*M_PIf-light_theta, light_phi );
                 light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - light.position );
+				YAML::Node lights = modelConfig["lights"];
+				std::vector<double> position = lights[lightId]["position"].as<std::vector<double> >();
+				light.anchor = make_float3(position[0] + light_x, position[1] + light_y, position[2] + light_z);
                 context["light"]->setUserData( sizeof(PPMLight), &light );
                 accumulation_frame = 0;
             }
