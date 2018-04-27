@@ -1,6 +1,6 @@
 # This file uses centimeters as units for non-parametric coordinates.
 
-mtllib torus_maya.mtl
+mtllib torus.mtl
 g default
 v -0.027567270588 -0.04984954946399994 -0.198262797304
 v -0.195034695284 -0.04984954946399994 0.12985015472

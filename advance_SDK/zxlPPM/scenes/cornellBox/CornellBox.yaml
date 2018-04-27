@@ -1,0 +1,17 @@
+cameras:
+  - eye: [0.0, 0.0, 4.0]
+    lookat: [0.0, 0.0, 0.0]
+    up: [0.0, 1.0, 0.0]
+    vfov: 35.0
+lights:
+  - is_area_light: 1
+    anchor: [0.005, 0.97, -0.03]
+    direction: [0.0, -1.0, 0.0]
+    position: [0.005, 0.98, -0.03]
+    v1: 0.234
+    v2: 0.19
+    radius: 0.03490658504 
+    power: [1.0, 1.0, 1.0]
+default_radius: [0.0001, 0.001]
+blend_mothod: [0.0, 5.0]
+filename: "scenes/CornellBox/CornellBox.obj"
