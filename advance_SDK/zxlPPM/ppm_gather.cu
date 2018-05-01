@@ -50,6 +50,8 @@ rtDeclareVariable(float,         scene_epsilon, , );
 rtDeclareVariable(float,         alpha, , );
 rtDeclareVariable(float,         total_emitted, , );
 rtDeclareVariable(float,         frame_number , , );
+rtDeclareVariable(float,         direct_ratio , , );
+rtDeclareVariable(float,         indirect_ratio , , );
 rtDeclareVariable(float3,        ambient_light , , );
 rtDeclareVariable(uint,          use_debug_buffer, , );
 rtDeclareVariable(PPMLight,      light , , );
@@ -231,6 +233,7 @@ RT_PROGRAM void gather()
   else
     rtpass_output_buffer[launch_index] = rec;
   //float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
+  //float3 final_color = indirect_flux * indirect_ratio + direct_flux * direct_ratio;
   float3 final_color = indirect_flux;
   output_buffer[launch_index] = make_float4(final_color);
   if(use_debug_buffer == 1)

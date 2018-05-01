@@ -1219,7 +1219,7 @@ void loadScene(sutil::Camera& camera) {
 	}
 	m_light.radius = lightData["radius"].as<double>();
 	std::vector<double> power = lightData["power"].as<std::vector<double> >();
-	m_light.power = make_float3(power[0], power[1], power[2]) * 10;
+	m_light.power = make_float3(power[0], power[1], power[2]);
 
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
@@ -1227,9 +1227,12 @@ void loadScene(sutil::Camera& camera) {
 	default_radius2 = defaultRadiuses[initRadiusId].as<double>();
 	context["rtpass_default_radius2"]->setFloat(default_radius2);
 	context["max_radius2"]->setFloat(default_radius2);
-	//std::vector<float> blend_mothod = modelConfig["blend_mothod"].as<std::vector<float> >();
-	//context["direct_ratio"]->setFloat(blend_mothod[0]);
-	//context["indirect_ratio"]->setFloat(blend_mothod[1]);
+
+  /*
+	std::vector<float> blend_mothod = modelConfig["blend_mothod"][0].as<std::vector<float> >();
+	context["direct_ratio"]->setFloat(blend_mothod[0]);
+	context["indirect_ratio"]->setFloat(blend_mothod[1]);
+  */
 
 	loadObjGeometry(modelConfig["filename"].as<std::string>());
 
