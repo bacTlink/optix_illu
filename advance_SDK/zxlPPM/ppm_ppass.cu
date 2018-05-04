@@ -55,37 +55,37 @@ rtDeclareVariable(uint2, launch_index, rtLaunchIndex, );
 
 static __device__ __inline__ float2 rnd_from_uint2( uint2& prev )
 {
-  return make_float2(rnd(prev.x), rnd(prev.y));
+	return make_float2(rnd(prev.x), rnd(prev.y));
 }
 
 static __device__ __inline__ void mapToDisk( optix::float2& sample )
 {
-  float phi, r;
-  float a = 2.0f * sample.x - 1.0f;      // (a,b) is now on [-1,1]^2 
-  float b = 2.0f * sample.y - 1.0f;      // 
-  if (a > -b) {                           // reg 1 or 2 
-    if (a > b) {                          // reg 1, also |a| > |b| 
-      r = a;
-      phi = (M_PIf/4.0f) * (b/a);
-    } else {                              // reg 2, also |b| > |a| 
-      r = b;
-      phi = (M_PIf/4.0f) * (2.0f - a/b);
-    }
-  } else {                                // reg 3 or 4 
-    if (a < b) {                          // reg 3, also |a|>=|b| && a!=0 
-      r = -a;
-      phi = (M_PIf/4.0f) * (4.0f + b/a);
-    } else {                              // region 4, |b| >= |a|,  but 
-      // a==0 and  b==0 could occur. 
-      r = -b;
-      phi = b != 0.0f ? (M_PIf/4.0f) * (6.0f - a/b) :
-        0.0f;
-    }
-  }
-  float u = r * cosf( phi );
-  float v = r * sinf( phi );
-  sample.x = u;
-  sample.y = v;
+	float phi, r;
+	float a = 2.0f * sample.x - 1.0f;      // (a,b) is now on [-1,1]^2 
+	float b = 2.0f * sample.y - 1.0f;      // 
+	if (a > -b) {                           // reg 1 or 2 
+	if (a > b) {                          // reg 1, also |a| > |b| 
+		r = a;
+		phi = (M_PIf/4.0f) * (b/a);
+	} else {                              // reg 2, also |b| > |a| 
+		r = b;
+		phi = (M_PIf/4.0f) * (2.0f - a/b);
+	}
+	} else {                                // reg 3 or 4 
+	if (a < b) {                          // reg 3, also |a|>=|b| && a!=0 
+		r = -a;
+		phi = (M_PIf/4.0f) * (4.0f + b/a);
+	} else {                              // region 4, |b| >= |a|,  but 
+		// a==0 and  b==0 could occur. 
+		r = -b;
+		phi = b != 0.0f ? (M_PIf/4.0f) * (6.0f - a/b) :
+		0.0f;
+	}
+	}
+	float u = r * cosf( phi );
+	float v = r * sinf( phi );
+	sample.x = u;
+	sample.y = v;
 }
 
 // sample hemisphere with cosine density
@@ -108,71 +108,71 @@ static __device__ __inline__ void sampleUnitHemisphere( const optix::float2& sam
 static __device__ __inline__ void generateAreaLightPhoton( const PPMLight& light, const float2& d_sample, float3& o, float3& d)
 {
   // Choose a random position on light
-  o = light.anchor + 0.5f * ( light.v1 + light.v2);
+	o = light.anchor + 0.5f * ( light.v1 + light.v2);
   
-  // Choose a random direction from light
-  float3 U, V, W;
-  create_onb( light.direction, U, V, W);
-  sampleUnitHemisphere( d_sample, U, V, W, d );
+	// Choose a random direction from light
+	float3 U, V, W;
+	create_onb( light.direction, U, V, W);
+	sampleUnitHemisphere( d_sample, U, V, W, d );
 }
 
 static __device__ __inline__ void generateSpotLightPhoton( const PPMLight& light, const float2& d_sample, float3& o, float3& d)
 {
-  o = light.position;
+	o = light.position;
 
-  // Choose random dir by sampling disk of radius light.radius and projecting up to unit hemisphere
-  float2 square_sample = d_sample; 
-  mapToDisk( square_sample );
-  square_sample = square_sample * atanf( light.radius );
-  float x = square_sample.x;
-  float y = square_sample.y;
-  float z = sqrtf( fmaxf( 0.0f, 1.0f - x*x - y*y ) );
+	// Choose random dir by sampling disk of radius light.radius and projecting up to unit hemisphere
+	float2 square_sample = d_sample; 
+	mapToDisk( square_sample );
+	square_sample = square_sample * atanf( light.radius );
+	float x = square_sample.x;
+	float y = square_sample.y;
+	float z = sqrtf( fmaxf( 0.0f, 1.0f - x*x - y*y ) );
 
-  // Now transform into light space
-  float3 U, V, W;
-  create_onb(light.direction, U, V, W);
-  d =  x*U + y*V + z*W;
+	// Now transform into light space
+	float3 U, V, W;
+	create_onb(light.direction, U, V, W);
+	d =  x*U + y*V + z*W;
 }
 
 
 RT_PROGRAM void ppass_camera()
 {
-  size_t2 size     = photon_rnd_seeds.size();
-  uint    pm_index = (launch_index.y * size.x + launch_index.x) * max_photon_count;
-  uint2   seed     = photon_rnd_seeds[launch_index]; // No need to reset since we dont reuse this seed
+	size_t2 size     = photon_rnd_seeds.size();
+	uint    pm_index = (launch_index.y * size.x + launch_index.x) * max_photon_count;
+	uint2   seed     = photon_rnd_seeds[launch_index]; // No need to reset since we dont reuse this seed
 
-  float2 direction_sample = make_float2(
-      ( static_cast<float>( launch_index.x ) + rnd( seed.x ) ) / static_cast<float>( size.x ),
-      ( static_cast<float>( launch_index.y ) + rnd( seed.y ) ) / static_cast<float>( size.y ) );
-  float3 ray_origin, ray_direction;
-  if( light.is_area_light ) {
-    generateAreaLightPhoton( light, direction_sample, ray_origin, ray_direction );
-  } else {
-    generateSpotLightPhoton( light, direction_sample, ray_origin, ray_direction );
-  }
+	float2 direction_sample = make_float2(
+		( static_cast<float>( launch_index.x ) + rnd( seed.x ) ) / static_cast<float>( size.x ),
+		( static_cast<float>( launch_index.y ) + rnd( seed.y ) ) / static_cast<float>( size.y ) );
+	float3 ray_origin, ray_direction;
+	if( light.is_area_light ) {
+		generateAreaLightPhoton( light, direction_sample, ray_origin, ray_direction );
+	} else {
+		generateSpotLightPhoton( light, direction_sample, ray_origin, ray_direction );
+	}
 
-  optix::Ray ray(ray_origin, ray_direction, ppass_and_gather_ray_type, scene_epsilon );
+	optix::Ray ray(ray_origin, ray_direction, ppass_and_gather_ray_type, scene_epsilon );
 
-  // Initialize our photons
-  for(unsigned int i = 0; i < max_photon_count; ++i) {
-    ppass_output_buffer[i+pm_index].energy = make_float3(0.0f);
-  }
+	// Initialize our photons
+	for(unsigned int i = 0; i < max_photon_count; ++i) {
+		ppass_output_buffer[i+pm_index].energy = make_float3(0.0f);
+	}
 
-  PhotonPRD prd;
-  //  rec.ray_dir = ray_direction; // set in ppass_closest_hit
-  prd.energy = light.power;
-  prd.sample = seed;
-  prd.pm_index = pm_index;
-  prd.num_deposits = 0;
-  prd.ray_depth = 0;
-  rtTrace( top_object, ray, prd );
+	PhotonPRD prd;
+	//  rec.ray_dir = ray_direction; // set in ppass_closest_hit
+	prd.energy = light.power;
+	prd.sample = seed;
+	prd.pm_index = pm_index;
+	prd.num_deposits = 0;
+	prd.ray_depth = 0;
+	rtTrace( top_object, ray, prd );
 }
 
 //
 // Closest hit material
 //
 rtDeclareVariable(float3,  Ks, , )={0,0,0};
-rtDeclareVariable(float3,  Kd, , )={0.7,0.7,0.7};
+rtDeclareVariable(float3,  Kd, , )={0.1,0.1,0.1};
 rtDeclareVariable(float,   Alpha, , );
 rtDeclareVariable(float3,  emitted, , )={0,0,0};
 rtDeclareVariable(float3, geometric_normal, attribute geometric_normal, ); 
@@ -195,12 +195,12 @@ RT_PROGRAM void ppass_closest_hit()
 
 	if (fmaxf(Kd) > 0.0f && n_dot_l > 0.f) {
 		// We hit a diffuse surface; record hit if it has bounced at least once
-		if (hit_record.ray_depth > 0) {
+		if (hit_record.ray_depth >= 0) {
 			PhotonRecord& rec = ppass_output_buffer[hit_record.pm_index + hit_record.num_deposits];
 			rec.position = hit_point;
 			rec.normal = ffnormal;
 			rec.ray_dir = ray.direction;
-			rec.energy = hit_record.energy * n_dot_l;
+			rec.energy = hit_record.energy * n_dot_l * Kd;
 			hit_record.num_deposits++;
 			if (hit_record.num_deposits >= max_photon_count) return;
 		}
@@ -210,6 +210,10 @@ RT_PROGRAM void ppass_closest_hit()
 		create_onb(ffnormal, U, V, W);
 		sampleUnitHemisphere(rnd_from_uint2(hit_record.sample), U, V, W, new_ray_dir);
 
+		hit_record.ray_depth++;
+		if (hit_record.ray_depth >= max_depth) return;
+		optix::Ray new_ray(hit_point, new_ray_dir, ppass_and_gather_ray_type, scene_epsilon);
+		rtTrace(top_object, new_ray, hit_record);
 	}
 	else {
 		if (Alpha < 1) {

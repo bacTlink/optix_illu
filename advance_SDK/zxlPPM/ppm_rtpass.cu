@@ -56,25 +56,25 @@ rtDeclareVariable(uint2,      launch_index, rtLaunchIndex, );
 
 RT_PROGRAM void rtpass_camera()
 {
-  float2 screen = make_float2( rtpass_output_buffer.size() );
-  /*
-  uint   seed   = image_rnd_seeds[index];                       // If we start writing into this buffer here we will
-  float2 sample = make_float2( rnd(seed.x), rnd(seed.y) );      // need to make it an INPUT_OUTPUT buffer.  For now it
-  image_rnd_seeds[index] = seed;                                // is just INPUT
-  */
-  float2 sample = make_float2( 0.5f, 0.5f ); 
+	float2 screen = make_float2( rtpass_output_buffer.size() );
+	/*
+	uint   seed   = image_rnd_seeds[index];                       // If we start writing into this buffer here we will
+	float2 sample = make_float2( rnd(seed.x), rnd(seed.y) );      // need to make it an INPUT_OUTPUT buffer.  For now it
+	image_rnd_seeds[index] = seed;                                // is just INPUT
+	*/
+	float2 sample = make_float2( 0.5f, 0.5f ); 
 
-  float2 d = ( make_float2(launch_index) + sample ) / screen * 2.0f - 1.0f;
-  float3 ray_origin = rtpass_eye;
-  float3 ray_direction = normalize(d.x*rtpass_U + d.y*rtpass_V + rtpass_W);
+	float2 d = ( make_float2(launch_index) + sample ) / screen * 2.0f - 1.0f;
+	float3 ray_origin = rtpass_eye;
+	float3 ray_direction = normalize(d.x*rtpass_U + d.y*rtpass_V + rtpass_W);
   
-  optix::Ray ray(ray_origin, ray_direction, rtpass_ray_type, scene_epsilon);
+	optix::Ray ray(ray_origin, ray_direction, rtpass_ray_type, scene_epsilon);
 
-  HitPRD prd;
-  // rec.ray_dir = ray_direction; // set in rtpass_closest_hit
-  prd.attenuation = make_float3( 1.0f );
-  prd.ray_depth   = 0u; 
-  rtTrace( top_object, ray, prd );
+	HitPRD prd;
+	// rec.ray_dir = ray_direction; // set in rtpass_closest_hit
+	prd.attenuation = make_float3( 1.0f );
+	prd.ray_depth   = 0u; 
+	rtTrace( top_object, ray, prd );
 }
 
 // 
@@ -82,7 +82,7 @@ RT_PROGRAM void rtpass_camera()
 // 
 rtDeclareVariable(float3,  Ks, , )={0,0,0};
 rtDeclareVariable(float3,  Kd, , )={0.7,0.7,0.7};
-rtDeclareVariable(float, Alpha, , );
+rtDeclareVariable(float,   Alpha, , );
 rtDeclareVariable(float3,  grid_color, , );
 rtDeclareVariable(uint,    use_grid, , )=0;
 rtDeclareVariable(float3,  emitted, , )={0,0,0};
@@ -97,102 +97,102 @@ rtDeclareVariable(float,      t_hit,        rtIntersectionDistance, );
 
 RT_PROGRAM void rtpass_closest_hit()
 {
-  // Check if this is a light source
-  if( fmaxf( emitted ) > 0.0f ) {
-    HitRecord& rec = rtpass_output_buffer[ launch_index ];
-    rec.attenuated_Kd = emitted*hit_prd.attenuation; 
-    rec.flags = 0u;
-    return;
-  }
+	// Check if this is a light source
+	if( fmaxf( emitted ) > 0.0f ) {
+		HitRecord& rec = rtpass_output_buffer[ launch_index ];
+		rec.attenuated_Kd = emitted * hit_prd.attenuation; 
+		rec.flags = 0u;
+		return;
+	}
 
-  float3 direction    = ray.direction;
-  float3 origin       = ray.origin;
-  float3 world_shading_normal   = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, shading_normal ) );
-  float3 world_geometric_normal = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, geometric_normal ) );
-  float3 ffnormal     = faceforward( world_shading_normal, -direction, world_geometric_normal );
-  float3 hit_point    = origin + t_hit*direction;
+	float3 direction    = ray.direction;
+	float3 origin       = ray.origin;
+	float3 world_shading_normal   = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, shading_normal ) );
+	float3 world_geometric_normal = normalize( rtTransformNormal( RT_OBJECT_TO_WORLD, geometric_normal ) );
+	float3 ffnormal     = faceforward( world_shading_normal, -direction, world_geometric_normal );
+	float3 hit_point    = origin + t_hit*direction;
 
-  if( fmaxf( Kd ) > 0.0f ) { 
-    // We hit a diffuse surface; record hit and return
-    HitRecord rec;
-    rec.position = hit_point; 
-    rec.normal = ffnormal;
-    if( !use_grid ) {
-      rec.attenuated_Kd = Kd * hit_prd.attenuation;
-    } else {
-      float grid_size = 50.0f; 
-      float line_size = 2.0f; 
-      float xx = ( hit_point.x + 1025.0f ) / grid_size;
-      xx = ( xx - static_cast<float>( static_cast<int>( xx ) ) ) * grid_size;
-      float zz = ( hit_point.z + 1025.0f ) / grid_size;
-      zz = ( zz - static_cast<float>( static_cast<int>( zz ) ) ) * grid_size;
-      if( xx < line_size  || zz < line_size )
-        rec.attenuated_Kd = grid_color * hit_prd.attenuation;
-      else
-        rec.attenuated_Kd = Kd * hit_prd.attenuation;
-    }
-    rec.flags = PPM_HIT;
+	if( fmaxf( Kd ) > 0.0f ) { 
+		// We hit a diffuse surface; record hit and return
+		HitRecord rec = rtpass_output_buffer[launch_index];
+		rec.position = hit_point; 
+		rec.normal = ffnormal;
+		if( !use_grid ) {
+			rec.attenuated_Kd = Kd * hit_prd.attenuation;
+		} else {
+			float grid_size = 50.0f; 
+			float line_size = 2.0f; 
+			float xx = ( hit_point.x + 1025.0f ) / grid_size;
+			xx = ( xx - static_cast<float>( static_cast<int>( xx ) ) ) * grid_size;
+			float zz = ( hit_point.z + 1025.0f ) / grid_size;
+			zz = ( zz - static_cast<float>( static_cast<int>( zz ) ) ) * grid_size;
+			if( xx < line_size  || zz < line_size )
+			rec.attenuated_Kd = grid_color * hit_prd.attenuation;
+			else
+			rec.attenuated_Kd = Kd * hit_prd.attenuation;
+		}
+		rec.flags = PPM_HIT;
 
-    rec.radius2 = rtpass_default_radius2;
-    rec.photon_count = 0;
-    rec.accum_atten = 0.0f;
-    rec.flux = make_float3(0.0f, 0.0f, 0.0f);
+		rec.radius2 = rtpass_default_radius2;
+		rec.photon_count = 0;
+		rec.accum_atten = 0.0f;
+		rec.flux = make_float3(0.0f, 0.0f, 0.0f);
     
-    rtpass_output_buffer[launch_index] = rec;
-    return;
-  }
-  if (Alpha < 1) {
+		rtpass_output_buffer[launch_index] = rec;
+		return;
+	}
+	if (Alpha < 1) {
 
-	  HitPRD refract_prd = hit_prd;
-	  refract_prd.ray_depth++;
+		HitPRD refract_prd = hit_prd;
+		refract_prd.ray_depth++;
 
-	  float refraction_facter = 1.5f;
-	  float critical_sina = 1.0f / refraction_facter;
-	  float critical_radian = asinf(critical_sina);
+		float refraction_facter = 1.5f;
+		float critical_sina = 1.0f / refraction_facter;
+		float critical_radian = asinf(critical_sina);
 
-	  float max_incidence_radian = M_PIf / 2.0f;
-	  float max_emergent_radian = M_PIf * 41.8f / 180.0f;
-	  float top_refacter = 0.96f;
-	  float bottom_incidence_t = powf(1 - top_refacter, 1 / max_incidence_radian);
-	  float bottom_emergent_t = powf(1 - top_refacter, 1 / max_emergent_radian);
-	  float K_refacter = 1;
+		float max_incidence_radian = M_PIf / 2.0f;
+		float max_emergent_radian = M_PIf * 41.8f / 180.0f;
+		float top_refacter = 0.96f;
+		float bottom_incidence_t = powf(1 - top_refacter, 1 / max_incidence_radian);
+		float bottom_emergent_t = powf(1 - top_refacter, 1 / max_emergent_radian);
+		float K_refacter = 1;
 
-	  float3 R;
-	  if (refract(R, direction, world_shading_normal, refraction_facter) == true) {
-		  float incidence_sina = sqrtf(1.0 - powf(fabsf(dot(direction, world_shading_normal)), 2.0f));
-		  float incidence_radian = asinf(incidence_sina);
+		float3 R;
+		if (refract(R, direction, world_shading_normal, refraction_facter) == true) {
+			float incidence_sina = sqrtf(1.0 - powf(fabsf(dot(direction, world_shading_normal)), 2.0f));
+			float incidence_radian = asinf(incidence_sina);
 
-		  if (dot(direction, world_shading_normal) < 0)
-			  K_refacter = 1 - pow(bottom_incidence_t, max_incidence_radian - incidence_radian);
-		  else
-			  K_refacter = 1 - pow(bottom_emergent_t, max_emergent_radian - incidence_radian);
+			if (dot(direction, world_shading_normal) < 0)
+				K_refacter = 1 - pow(bottom_incidence_t, max_incidence_radian - incidence_radian);
+			else
+				K_refacter = 1 - pow(bottom_emergent_t, max_emergent_radian - incidence_radian);
 
-		  refract_prd.attenuation *= K_refacter;
+			refract_prd.attenuation *= K_refacter;
 
-		  optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
-		  rtTrace(top_object, refr_ray, refract_prd);
-	  }
-	  else {
-		  refract_prd.attenuation *= 1.0f;
-		  if (fmaxf(Ks) > 0.0f)
-		  {
-			  R = reflect(direction, ffnormal);
-			  optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
-			  rtTrace(top_object, refr_ray, refract_prd);
-		  }
-	  }
-  }
-  else {
-	  if (fmaxf(Ks) > 0.0f) {
-		  float3 Reflect_dir = reflect(direction, ffnormal);
-		  HitPRD reflect_prd = hit_prd;
-		  reflect_prd.attenuation *= Ks;
-		  reflect_prd.ray_depth++;
-		  if (reflect_prd.ray_depth >= max_depth) return;
-		  optix::Ray refl_ray(hit_point, Reflect_dir, rtpass_ray_type, scene_epsilon);
-		  rtTrace(top_object, refl_ray, reflect_prd);
-	  }
-  }
+			optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
+			rtTrace(top_object, refr_ray, refract_prd);
+		}
+		else {
+			refract_prd.attenuation *= 1.0f;
+			if (fmaxf(Ks) > 0.0f)
+			{
+				R = reflect(direction, ffnormal);
+				optix::Ray refr_ray(hit_point, R, rtpass_ray_type, scene_epsilon);
+				rtTrace(top_object, refr_ray, refract_prd);
+			}
+		}
+	}
+	else {
+		if (fmaxf(Ks) > 0.0f) {
+			float3 Reflect_dir = reflect(direction, ffnormal);
+			HitPRD reflect_prd = hit_prd;
+			reflect_prd.attenuation *= Ks;
+			reflect_prd.ray_depth++;
+			if (reflect_prd.ray_depth >= max_depth) return;
+			optix::Ray refl_ray(hit_point, Reflect_dir, rtpass_ray_type, scene_epsilon);
+			rtTrace(top_object, refl_ray, reflect_prd);
+		}
+	}
 }
 
 //
@@ -201,16 +201,16 @@ RT_PROGRAM void rtpass_closest_hit()
 rtTextureSampler<float4, 2> envmap;
 RT_PROGRAM void rtpass_miss()
 {
-  float theta = atan2f( ray.direction.x, ray.direction.z );
-  float phi   = M_PIf * 0.5f -  acosf( ray.direction.y );
-  float u     = (theta + M_PIf) * (0.5f * M_1_PIf);
-  float v     = 0.5f * ( 1.0f + sin(phi) );
-  float3 result = make_float3(tex2D(envmap, u, v));
-  //float3 result = make_float3(0,0,0);
+	float theta = atan2f( ray.direction.x, ray.direction.z );
+	float phi   = M_PIf * 0.5f -  acosf( ray.direction.y );
+	float u     = (theta + M_PIf) * (0.5f * M_1_PIf);
+	float v     = 0.5f * ( 1.0f + sin(phi) );
+	float3 result = make_float3(tex2D(envmap, u, v));
+	//float3 result = make_float3(0,0,0);
 
-  HitRecord& rec = rtpass_output_buffer[launch_index];
-  rec.flags = 0u;
-  rec.attenuated_Kd = hit_prd.attenuation * result;
+	HitRecord& rec = rtpass_output_buffer[launch_index];
+	rec.flags = 0u;
+	rec.attenuated_Kd = hit_prd.attenuation * result;
 }
 
 /*

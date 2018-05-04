@@ -71,8 +71,11 @@ using namespace optix;
 const char* const SAMPLE_NAME = "zxlPPM";
 const unsigned int WIDTH  = 672u;
 const unsigned int HEIGHT = 672u;
+
 const unsigned int MAX_PHOTON_COUNT = 10u;
-const unsigned int PHOTON_LAUNCH_DIM = 512u;
+const unsigned int MAX_PHOTON_DEPTH = 8u;
+
+const unsigned int PHOTON_LAUNCH_DIM = 256u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
 
@@ -219,8 +222,8 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
 
     context["photon_mapping"]->setUint( s_photon_mapping );
 
-    context["max_depth"]->setUint( 50u );
-    context["max_photon_count"]->setUint( MAX_PHOTON_COUNT );
+    context["max_depth"]->setUint(MAX_PHOTON_DEPTH);
+	context["max_photon_count"]->setUint(MAX_PHOTON_COUNT);
 
     context["scene_epsilon"]->setFloat( 1.e-1f );
     context["alpha"]->setFloat( 0.7f );
@@ -1219,7 +1222,7 @@ void loadScene(sutil::Camera& camera) {
 	}
 	m_light.radius = lightData["radius"].as<double>();
 	std::vector<double> power = lightData["power"].as<std::vector<double> >();
-	m_light.power = make_float3(power[0], power[1], power[2]) * 10;
+	m_light.power = make_float3(power[0], power[1], power[2]);
 
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
