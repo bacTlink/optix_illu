@@ -50,6 +50,8 @@ rtDeclareVariable(float,         scene_epsilon, , );
 rtDeclareVariable(float,         alpha, , );
 rtDeclareVariable(float,         total_emitted, , );
 rtDeclareVariable(float,         frame_number , , );
+rtDeclareVariable(float,         direct_ratio , , );
+rtDeclareVariable(float,         indirect_ratio , , );
 rtDeclareVariable(float3,        ambient_light , , );
 rtDeclareVariable(uint,          use_debug_buffer, , );
 rtDeclareVariable(PPMLight,      light , , );
