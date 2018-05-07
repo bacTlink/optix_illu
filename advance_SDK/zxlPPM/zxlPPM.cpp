@@ -225,7 +225,7 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
     context["max_depth"]->setUint(MAX_PHOTON_DEPTH);
 	context["max_photon_count"]->setUint(MAX_PHOTON_COUNT);
 
-    context["scene_epsilon"]->setFloat( 1.e-1f );
+    context["scene_epsilon"]->setFloat( 1.e-3f );
     context["alpha"]->setFloat( 0.7f );
     context["total_emitted"]->setFloat( 0.0f );
     context["frame_number"]->setFloat( 0.0f );
@@ -261,7 +261,7 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
         // RTPass exception/miss programs
         Program exception_program = context->createProgramFromPTXFile( ptx_path, "rtpass_exception" );
         context->setExceptionProgram( rtpass, exception_program );
-        context["rtpass_bad_color"]->setFloat( 0.0f, 1.0f, 0.0f );
+        context["rtpass_bad_color"]->setFloat( 0.0f, 0.0f, 0.0f );
         context->setMissProgram( rtpass, context->createProgramFromPTXFile( ptx_path, "rtpass_miss" ) );
         context["rtpass_bg_color"]->setFloat( make_float3( 0.34f, 0.55f, 0.85f ) );
     }
@@ -1351,6 +1351,10 @@ int main( int argc, char** argv )
 				std::cerr << "Missing argument to " << arg << "\n";
 				printUsageAndExit(argv[0]);
 			}
+		}
+		else if (arg == "--knn")
+		{
+      s_KNN = true;
 		}
         else
         {
