@@ -7,13 +7,14 @@ import math
 import concurrent.futures
 import yaml
 
-cuda_devices = [0]
-model_name = 'box'
+cuda_devices = [0, 1]
+model_name = 'torus'
+model_version = '2'
 binfilename = '../bin/zxlPPM'
 binfile = os.path.join(os.path.split(os.path.realpath(__file__))[0], binfilename)
 basic_options = ['-n']
-dst_dir = '/home/bactlink/disk/10000x224x224_' + model_name + '_diff/'
-max_threads_per_device = 20
+dst_dir = '/data3/lzh/10000x672x672_' + model_name + model_version + '_diff/'
+max_threads_per_device = 17
 
 def get_yaml(filename):
     with open(filename) as f:
@@ -57,7 +58,7 @@ def run_prime_ppm():
 
 def run_zxl_ppm_process(cuda_device, camera_num, light_num, radius_num = 0):
     options = copy.copy(basic_options)
-    options.append('--file ' + os.path.join(dst_dir, model_name + '-') + '-c' + str(camera_num) + '-l' + str(light_num) + '-r' + str(radius_num))
+    options.append('--file ' + os.path.join(dst_dir, model_name + model_version + '-') + '-c' + str(camera_num) + '-l' + str(light_num) + '-r' + str(radius_num))
     options.append('--model ' + model_name + ' null')
     options.append('--camera ' + str(camera_num))
     options.append('--light ' + str(light_num))
@@ -69,6 +70,9 @@ def run_zxl_ppm_process(cuda_device, camera_num, light_num, radius_num = 0):
     subprocess.call([command], shell=True)
     options.pop()
     options.pop()
+    options.pop()
+    options.append('--radius ' + str(radius_num + 1))
+    options.append('--knn')
     command = 'CUDA_VISIBLE_DEVICES=' + str(cuda_device) + ' ' + binfile + ' ' + ' '.join(options);
     print command
     subprocess.call([command], shell=True)
