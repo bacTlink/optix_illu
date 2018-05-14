@@ -195,7 +195,7 @@ RT_PROGRAM void ppass_closest_hit()
 
 	if (fmaxf(Kd) > 0.0f && n_dot_l > 0.f) {
 		// We hit a diffuse surface; record hit if it has bounced at least once
-		if (hit_record.ray_depth >= 0) {
+		if (hit_record.ray_depth > 0) {
 			PhotonRecord& rec = ppass_output_buffer[hit_record.pm_index + hit_record.num_deposits];
 			rec.position = hit_point;
 			rec.normal = ffnormal;
