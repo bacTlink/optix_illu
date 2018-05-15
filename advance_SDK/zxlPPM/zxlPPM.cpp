@@ -906,6 +906,17 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
 				YAML::Node lights = modelConfig["lights"];
 				std::vector<double> position = lights[lightId]["position"].as<std::vector<double> >();
 				light.anchor = make_float3(position[0] + light_x, position[1] + light_y, position[2] + light_z);
+
+				if (light.is_area_light) {
+					light.v1 = make_float3(1.0f, 0.f, 0.0f) * m_light.v1Len;
+					light.v2 = make_float3(0.0f, 0.f, 1.0f) * m_light.v2Len;
+					float3 m_light_t_normal;
+					m_light_t_normal = cross(light.v1, light.direction);
+					m_light.v1 = cross(light.direction, m_light_t_normal);
+					m_light_t_normal = cross(light.v2, light.direction);
+					m_light.v2 = cross(light.direction, m_light_t_normal);
+				}
+
                 context["light"]->setUserData( sizeof(PPMLight), &light );
                 accumulation_frame = 0;
             }
