@@ -75,7 +75,7 @@ const unsigned int HEIGHT = 672u;
 const unsigned int MAX_PHOTON_COUNT = 10u;
 const unsigned int MAX_PHOTON_DEPTH = 8u;
 
-const unsigned int PHOTON_LAUNCH_DIM = 256u;
+const unsigned int PHOTON_LAUNCH_DIM = 26u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
 
@@ -1206,7 +1206,7 @@ void loadScene(sutil::Camera& camera) {
 	YAML::Node lightData = lights[lightId];
 	m_light.is_area_light = lightData["is_area_light"].as<int>();
 	if (lightData["direction"].IsNull()) {
-		std::vector<double> target = lightData["target"].as<std::vector<double> >();
+		std::vector<double> target = lightData["anchor"].as<std::vector<double> >();
 		std::vector<double> position = lightData["position"].as<std::vector<double> >();
 		float3 tmpTarget = make_float3(target[0], target[1], target[2]);
 		m_light.position = make_float3(position[0], position[1], position[2]);
