@@ -75,7 +75,7 @@ const unsigned int HEIGHT = 672u;
 const unsigned int MAX_PHOTON_COUNT = 10u;
 const unsigned int MAX_PHOTON_DEPTH = 8u;
 
-const unsigned int PHOTON_LAUNCH_DIM = 26u;
+const unsigned int PHOTON_LAUNCH_DIM = 256u;
 const float LIGHT_THETA = 1.15f;
 const float LIGHT_PHI = 2.19f;
 
