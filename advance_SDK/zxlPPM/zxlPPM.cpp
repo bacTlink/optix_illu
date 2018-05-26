@@ -97,6 +97,7 @@ bool s_KNN = false;
 bool s_display_debug_buffer = false;
 bool s_print_timings = false;
 bool s_photon_mapping = false;
+bool s_direct_light = false;
 unsigned int photon_mapping_frames = 0u;
 bool s_multiple_radius = false;
 double default_radius2 = 0.25f;
@@ -221,6 +222,7 @@ void createContext( bool use_pbo, unsigned int photon_launch_dim, Buffer& photon
     context->setStackSize( 800 );
 
     context["photon_mapping"]->setUint( s_photon_mapping );
+    context["direct_light"]->setUint( s_direct_light );
 
     context["max_depth"]->setUint(MAX_PHOTON_DEPTH);
 	context["max_photon_count"]->setUint(MAX_PHOTON_COUNT);
@@ -765,6 +767,7 @@ void launch_all( const sutil::Camera& camera, unsigned int photon_launch_dim, un
     }
 
     // Trace photons
+    if (!s_direct_light)
     {
         if (s_print_timings) std::cerr << "Starting photon pass   ... ";
 
@@ -835,7 +838,7 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
     glViewport(0, 0, WIDTH, HEIGHT );
 
     unsigned int frame_count = 0;
-    unsigned int accumulation_frame = 0;
+    unsigned int accumulation_frame = 1;
     float light_phi = LIGHT_PHI;
     float light_theta = ( 0.5f*M_PIf - LIGHT_THETA );
 	float light_x = 0;
@@ -900,7 +903,7 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
 			if (ImGui::SliderFloat("light z", &light_z, -1.0f, 1.0f, 0, 1.f)) {
 				light_changed = true;
 			}
-            if ( light_changed ) {
+      if ( light_changed ) {
                 light.position  = 1000.0f * sphericalToCartesian( 0.5f*M_PIf-light_theta, light_phi );
                 light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - light.position );
 				YAML::Node lights = modelConfig["lights"];
@@ -918,7 +921,7 @@ void glfwRun( GLFWwindow* window, sutil::Camera& camera, PPMLight& light, unsign
 				}
 
                 context["light"]->setUserData( sizeof(PPMLight), &light );
-                accumulation_frame = 0;
+                accumulation_frame = 1;
             }
 
             ImGui::End();
@@ -1016,6 +1019,7 @@ void printUsageAndExit( const std::string& argv0 )
         "  -ddb | --display-debug-buffer  Display debug buffer information to the shell.\n"
         "  -pt  | --print-timings         Print timing information.\n"
         "  -pm  | --photon-mapping <n>    Running photon mapping for n frames.\n"
+        "  -dl  | --direct-light          Only render indirect light\n"
         "  -mr  | --multiple-radius       Multiple r2 with num_frames in photon mapping.\n"
         "App Keystrokes:\n"
         "  q  Quit\n"
@@ -1233,7 +1237,7 @@ void loadScene(sutil::Camera& camera) {
 	}
 	m_light.radius = lightData["radius"].as<double>();
 	std::vector<double> power = lightData["power"].as<std::vector<double> >();
-	m_light.power = make_float3(power[0], power[1], power[2]);
+	m_light.power = make_float3(power[0], power[1], power[2]) * 3;
 
 	context["light"]->setUserData(sizeof(PPMLight), &m_light);
 
@@ -1304,6 +1308,10 @@ int main( int argc, char** argv )
         }
         photon_mapping_frames = atoi( argv[++i] );
         s_photon_mapping = true;
+    }
+    else if( arg == "-dl" || arg == "--direct-light"  )
+    {
+        s_direct_light = true;
     }
     else if( arg == "-mr" || arg == "--multiple-radius" )
     {
@@ -1420,13 +1428,13 @@ int main( int argc, char** argv )
             std::cerr << "Accumulating " << numframes << " frames " << (s_photon_mapping ? "(PM) " : "")
                       << "for " << out_file << std::endl;
             for ( unsigned int frame = 1; frame <= numframes; ++frame ) {
-                int frame_number = s_photon_mapping ? 1 : frame;
-                context["frame_number"]->setFloat( static_cast<float>( frame_number ) );
+                int frame_number = s_direct_light ? frame : s_photon_mapping ? 1 : frame;
+                context["frame_number"]->setFloat( static_cast<float>( frame ) );
                 if (s_multiple_radius) {
                   context["rtpass_default_radius2"]->setFloat( default_radius2 * frame * frame );
                 }
                 launch_all( camera, photon_launch_dim, frame_number, photons_buffer, photon_map_buffer );
-                if (frame == numframes || photon_mapping_frames > 0) {
+                if (frame == numframes || (s_photon_mapping && !s_direct_light)) {
                   char tmp[20];
                   sprintf(tmp, "_%d", frame);
                   sutil::writeBufferToFile( (out_file + tmp + ".png").c_str(), getOutputBuffer() );
