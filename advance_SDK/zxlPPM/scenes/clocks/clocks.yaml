@@ -1,4 +1,4 @@
-camera_data:
+cameras:
   - eye: [0.6, -0.05, 0.0]
     lookat: [0.0, 0.0, 0.0]
     up: [0.0, 1.0, 0.0]
@@ -7,21 +7,15 @@ camera_data:
     lookat: [0.0, 0.0, 0.0]
     up: [0.0, 1.0, 0.0]
     vfov: 35.0
-m_light:
-  - is_area_light: 0
-    space:
-      - anchor: [0.0, 0.0, 0.0]
-        position: [0.0, 0.47, 0.0]
-        direction: null
+lights:
+  - is_area_light: 1
+    anchor: [0.0, 0.0, 0.0]
+    position: [0.0, 0.47, 0.0]
+    direction: [0.0, -1.0, 0.0]
     radius: 0.001745329252 
-    power: 
-      - [1.0, 1.0, 1.0]
-      - [5000, 5000, 5000]
-default_radius": 
-  - 0.001
-blend_mothod:
-  - [1.0, 8.0]
-  - [1.0, 0.0]
-  - [0.0, 1.0]
-  - [1.0, 1.0]
+    v1: 0.224
+    v2: 0.08
+    power: [1.0, 1.0, 1.0]
+default_radius: [0.001, 0.0001]
+blend_mothod: [1.0, 8.0]
 filename: "scenes/clocks/clocks.obj"
