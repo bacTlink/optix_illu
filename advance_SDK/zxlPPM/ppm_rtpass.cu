@@ -45,6 +45,7 @@ rtDeclareVariable(rtObject,      top_object, , );
 //
 rtBuffer<HitRecord, 2>           rtpass_output_buffer;
 rtBuffer<uint2, 2>               image_rnd_seeds;
+rtDeclareVariable(uint,          direct_light, , );
 rtDeclareVariable(uint,          max_depth, , );
 rtDeclareVariable(float,         rtpass_default_radius2, , );
 rtDeclareVariable(float3,        rtpass_eye, , );
@@ -206,7 +207,8 @@ RT_PROGRAM void rtpass_miss()
 	float u     = (theta + M_PIf) * (0.5f * M_1_PIf);
 	float v     = 0.5f * ( 1.0f + sin(phi) );
 	float3 result = make_float3(tex2D(envmap, u, v));
-	//float3 result = make_float3(0,0,0);
+  if (direct_light)
+    result = make_float3(0,0,0);
 
 	HitRecord& rec = rtpass_output_buffer[launch_index];
 	rec.flags = 0u;

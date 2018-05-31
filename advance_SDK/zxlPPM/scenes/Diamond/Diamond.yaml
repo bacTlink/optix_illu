@@ -371,7 +371,7 @@ cameras:
 lights:
   0:
     is_area_light: 1
-    target: [0.0, 0.0, 0.0]
+    anchor: [0.0, 0.0, 0.0]
     direction: ~
     position: [0.151753, -0.508183, -0.0638461]
     v1: 0.01

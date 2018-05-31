@@ -236,7 +236,7 @@ RT_PROGRAM void gather()
 	//float3 final_color = direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
 	float3 final_color;
   if (direct_light)
-    final_color = 0.05 * ambient_light * rec_atten_Kd;
+    final_color = (ambient_light * rec_atten_Kd);
   else
     final_color = indirect_flux * 2;
 	output_buffer[launch_index] = make_float4(final_color);

@@ -1251,6 +1251,9 @@ void loadScene(sutil::Camera& camera) {
 	context["indirect_ratio"]->setFloat(blend_mothod[1]);
   */
 
+  
+  context["ambient_light"]->setFloat( 0.1f, 0.1f, 0.1f);
+
 	loadObjGeometry(modelConfig["filename"].as<std::string>());
 
 }
